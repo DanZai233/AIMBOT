@@ -107,17 +107,25 @@ export default function MainMenu({ onStart, settings, onOpenSettings }: Props) {
         transition={{ duration: 0.6 }}
         className="text-center mb-12 relative z-10"
       >
-        <h1
-          className="text-6xl font-black tracking-tighter mb-4"
-          style={{
-            background: `linear-gradient(135deg, ${colors.secondary}, ${colors.primary})`,
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            filter: `drop-shadow(0 0 30px ${colors.glow})`,
-          }}
-        >
-          AIM TRAINER PRO
-        </h1>
+        <div className="relative">
+          <div
+            className="absolute inset-0 text-6xl font-black tracking-tighter blur-xl opacity-40 select-none"
+            aria-hidden="true"
+            style={{ color: colors.primary }}
+          >
+            AIM TRAINER PRO
+          </div>
+          <h1
+            className="relative text-6xl font-black tracking-tighter"
+            style={{
+              background: `linear-gradient(135deg, ${colors.secondary}, ${colors.primary})`,
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+            }}
+          >
+            AIM TRAINER PRO
+          </h1>
+        </div>
         <p className="text-zinc-400 text-lg max-w-md mx-auto">
           提升你的鼠标控制、甩枪速度和追踪精度。
         </p>
