@@ -58,6 +58,7 @@ export class GameEngine {
     window.addEventListener('resize', this.resize);
 
     if (settings.background === 'stars') this.initStars();
+    this.applyCSSCursor();
   }
 
   public start() {
@@ -82,6 +83,7 @@ export class GameEngine {
   }
 
   private cleanup() {
+    this.canvas.style.cursor = '';
     this.canvas.removeEventListener('mousedown', this.handleMouseDown);
     this.canvas.removeEventListener('mousemove', this.handleMouseMove);
     this.canvas.removeEventListener('mouseup', this.handleMouseUp);
@@ -394,7 +396,6 @@ export class GameEngine {
   // ─── Drawing ───────────────────────────────────────────
 
   private draw(time: number) {
-    this.ctx.save();
     this.drawBackground(time);
     this.drawCrosshairLines();
     for (const t of this.targets) this.drawTarget(t);
@@ -403,8 +404,6 @@ export class GameEngine {
     this.drawScorePopups();
     this.drawMissVignette();
     this.drawTrackingFeedback();
-    this.drawCursor();
-    this.ctx.restore();
   }
 
   // ─── Backgrounds ───────────────────────────────────────
@@ -495,9 +494,12 @@ export class GameEngine {
     const r = t.radius * scale;
     if (r < 0.5) return;
     const colors = COLOR_SCHEMES[this.settings.colorScheme];
-    this.ctx.save();
-    this.ctx.shadowColor = colors.glow;
-    this.ctx.shadowBlur = 15 * scale;
+    this.ctx.globalAlpha = 0.18;
+    this.ctx.beginPath();
+    this.ctx.arc(t.x, t.y, r * 1.5, 0, Math.PI * 2);
+    this.ctx.fillStyle = colors.primary;
+    this.ctx.fill();
+    this.ctx.globalAlpha = 1;
     switch (this.settings.targetShape) {
       case 'circle':   this.drawCircle(t.x, t.y, r, colors); break;
       case 'diamond':  this.drawDiamond(t.x, t.y, r, colors); break;
@@ -505,7 +507,6 @@ export class GameEngine {
       case 'hexagon':  this.drawHexagon(t.x, t.y, r, colors); break;
       case 'triangle': this.drawTriangle(t.x, t.y, r, colors); break;
     }
-    this.ctx.restore();
   }
 
   private drawCircle(x: number, y: number, r: number, c: SchemeColors) {
@@ -657,59 +658,41 @@ export class GameEngine {
     this.ctx.fill();
   }
 
-  // ─── Custom Cursor ─────────────────────────────────────
+  // ─── CSS Cursor (zero-lag, rendered by OS) ──────────────
 
-  private drawCursor() {
-    const x = this.mouseX;
-    const y = this.mouseY;
-    if (x === 0 && y === 0) return;
-    const colors = COLOR_SCHEMES[this.settings.colorScheme];
-
-    this.ctx.save();
-    this.ctx.shadowColor = 'transparent';
-    this.ctx.shadowBlur = 0;
-
+  private applyCSSCursor() {
+    const c = COLOR_SCHEMES[this.settings.colorScheme];
+    const s = 32, h = s / 2;
+    let svg: string;
     switch (this.settings.cursorStyle) {
-      case 'crosshair': {
-        const gap = 5;
-        const len = 14;
-        this.ctx.strokeStyle = 'rgba(255,255,255,0.9)';
-        this.ctx.lineWidth = 1.5;
-        this.ctx.beginPath();
-        this.ctx.moveTo(x, y - gap); this.ctx.lineTo(x, y - gap - len);
-        this.ctx.moveTo(x, y + gap); this.ctx.lineTo(x, y + gap + len);
-        this.ctx.moveTo(x - gap, y); this.ctx.lineTo(x - gap - len, y);
-        this.ctx.moveTo(x + gap, y); this.ctx.lineTo(x + gap + len, y);
-        this.ctx.stroke();
-        this.ctx.beginPath(); this.ctx.arc(x, y, 1.5, 0, Math.PI * 2);
-        this.ctx.fillStyle = colors.primary; this.ctx.fill();
+      case 'crosshair':
+        svg = `<svg xmlns='http://www.w3.org/2000/svg' width='${s}' height='${s}'>` +
+          `<line x1='${h}' y1='3' x2='${h}' y2='${h - 5}' stroke='rgba(255,255,255,.9)' stroke-width='1.5'/>` +
+          `<line x1='${h}' y1='${h + 5}' x2='${h}' y2='${s - 3}' stroke='rgba(255,255,255,.9)' stroke-width='1.5'/>` +
+          `<line x1='3' y1='${h}' x2='${h - 5}' y2='${h}' stroke='rgba(255,255,255,.9)' stroke-width='1.5'/>` +
+          `<line x1='${h + 5}' y1='${h}' x2='${s - 3}' y2='${h}' stroke='rgba(255,255,255,.9)' stroke-width='1.5'/>` +
+          `<circle cx='${h}' cy='${h}' r='1.5' fill='${c.primary}'/>` +
+          `</svg>`;
         break;
-      }
-      case 'dot': {
-        this.ctx.beginPath(); this.ctx.arc(x, y, 4, 0, Math.PI * 2);
-        this.ctx.fillStyle = colors.primary; this.ctx.fill();
+      case 'dot':
+        svg = `<svg xmlns='http://www.w3.org/2000/svg' width='${s}' height='${s}'>` +
+          `<circle cx='${h}' cy='${h}' r='4' fill='${c.primary}'/>` +
+          `</svg>`;
         break;
-      }
-      case 'ring': {
-        this.ctx.beginPath(); this.ctx.arc(x, y, 12, 0, Math.PI * 2);
-        this.ctx.strokeStyle = colors.primary; this.ctx.lineWidth = 1.5; this.ctx.stroke();
-        this.ctx.beginPath(); this.ctx.arc(x, y, 1.5, 0, Math.PI * 2);
-        this.ctx.fillStyle = '#fff'; this.ctx.fill();
+      case 'ring':
+        svg = `<svg xmlns='http://www.w3.org/2000/svg' width='${s}' height='${s}'>` +
+          `<circle cx='${h}' cy='${h}' r='10' stroke='${c.primary}' stroke-width='1.5' fill='none'/>` +
+          `<circle cx='${h}' cy='${h}' r='1.5' fill='white'/>` +
+          `</svg>`;
         break;
-      }
-      case 'precise': {
-        const len = 8;
-        this.ctx.strokeStyle = 'rgba(255,255,255,0.7)';
-        this.ctx.lineWidth = 1;
-        this.ctx.beginPath();
-        this.ctx.moveTo(x - len, y); this.ctx.lineTo(x + len, y);
-        this.ctx.moveTo(x, y - len); this.ctx.lineTo(x, y + len);
-        this.ctx.stroke();
-        this.ctx.beginPath(); this.ctx.arc(x, y, 2, 0, Math.PI * 2);
-        this.ctx.fillStyle = colors.primary; this.ctx.fill();
+      case 'precise':
+        svg = `<svg xmlns='http://www.w3.org/2000/svg' width='${s}' height='${s}'>` +
+          `<line x1='${h - 8}' y1='${h}' x2='${h + 8}' y2='${h}' stroke='rgba(255,255,255,.7)' stroke-width='1'/>` +
+          `<line x1='${h}' y1='${h - 8}' x2='${h}' y2='${h + 8}' stroke='rgba(255,255,255,.7)' stroke-width='1'/>` +
+          `<circle cx='${h}' cy='${h}' r='2' fill='${c.primary}'/>` +
+          `</svg>`;
         break;
-      }
     }
-    this.ctx.restore();
+    this.canvas.style.cursor = `url("data:image/svg+xml,${encodeURIComponent(svg)}") ${h} ${h}, crosshair`;
   }
 }

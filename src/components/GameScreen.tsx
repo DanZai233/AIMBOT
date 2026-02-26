@@ -63,7 +63,7 @@ export default function GameScreen({ mode, settings, onGameOver, onQuit }: Props
     : '100';
 
   return (
-    <div className="relative w-full h-screen overflow-hidden bg-zinc-900" style={{ cursor: 'none' }}>
+    <div className="relative w-full h-screen overflow-hidden bg-zinc-900">
       {/* HUD */}
       <div className="absolute top-0 left-0 right-0 p-5 flex justify-between items-start z-10 pointer-events-none">
         <div className="flex items-start gap-8">
@@ -99,8 +99,7 @@ export default function GameScreen({ mode, settings, onGameOver, onQuit }: Props
       {/* Quit Button */}
       <button
         onClick={onQuit}
-        className="absolute bottom-6 left-6 p-3 bg-zinc-800/50 hover:bg-zinc-700/80 rounded-full text-zinc-400 hover:text-white transition-colors z-20"
-        style={{ cursor: 'pointer' }}
+        className="absolute bottom-6 left-6 p-3 bg-zinc-800/50 hover:bg-zinc-700/80 rounded-full text-zinc-400 hover:text-white transition-colors z-20 cursor-pointer"
       >
         <ArrowLeft className="w-5 h-5" />
       </button>
