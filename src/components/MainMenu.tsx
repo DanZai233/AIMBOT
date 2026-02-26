@@ -109,7 +109,7 @@ export default function MainMenu({ onStart, settings, onOpenSettings }: Props) {
       >
         <div className="relative">
           <div
-            className="absolute inset-0 text-6xl font-black tracking-tighter blur-xl opacity-40 select-none"
+            className="absolute inset-0 text-6xl font-black tracking-tighter blur-lg opacity-30 select-none"
             aria-hidden="true"
             style={{ color: colors.primary }}
           >
