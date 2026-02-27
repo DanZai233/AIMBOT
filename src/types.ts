@@ -1,4 +1,4 @@
-export type GameMode = 'GRIDSHOT' | 'SPIDERSHOT' | 'MICROFLICK' | 'TRACKING';
+export type GameMode = 'GRIDSHOT' | 'SPIDERSHOT' | 'MICROFLICK' | 'TRACKING' | 'FPS3D';
 
 export type GameState = 'MENU' | 'PLAYING' | 'RESULTS';
 

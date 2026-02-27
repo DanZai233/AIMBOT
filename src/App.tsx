@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { GameMode, GameState, GameStats, GameSettings, DEFAULT_SETTINGS } from './types';
 import MainMenu from './components/MainMenu';
 import GameScreen from './components/GameScreen';
+import FPS3DScreen from './components/FPS3DScreen';
 import ResultsScreen from './components/ResultsScreen';
 import SettingsPanel from './components/SettingsPanel';
 
@@ -51,8 +52,11 @@ export default function App() {
       {gameState === 'MENU' && (
         <MainMenu onStart={startGame} settings={settings} onOpenSettings={() => setShowSettings(true)} />
       )}
-      {gameState === 'PLAYING' && (
+      {gameState === 'PLAYING' && mode !== 'FPS3D' && (
         <GameScreen mode={mode} settings={settings} onGameOver={handleGameOver} onQuit={returnToMenu} />
+      )}
+      {gameState === 'PLAYING' && mode === 'FPS3D' && (
+        <FPS3DScreen settings={settings} onGameOver={handleGameOver} onQuit={returnToMenu} />
       )}
       {gameState === 'RESULTS' && lastStats && (
         <ResultsScreen stats={lastStats} mode={mode} settings={settings} onRetry={() => startGame(mode)} onMenu={returnToMenu} />

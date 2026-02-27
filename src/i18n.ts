@@ -68,6 +68,10 @@ const translations: Record<Locale, Record<string, string>> = {
     'results.retry': '再来一局',
     'results.menu': '主菜单',
     'results.star': '觉得好玩？给个 Star 支持一下吧',
+
+    'mode.fps3d.desc': '真实 FPS 视角，准星固定，移动视角瞄准 3D 空间中的目标。',
+    'fps.clickToLock': '点击锁定鼠标开始瞄准',
+    'fps.toUnlock': '解锁鼠标',
   },
 
   en: {
@@ -134,6 +138,10 @@ const translations: Record<Locale, Record<string, string>> = {
     'results.retry': 'Play Again',
     'results.menu': 'Main Menu',
     'results.star': 'Like it? Give us a Star on GitHub!',
+
+    'mode.fps3d.desc': 'True FPS perspective. Fixed crosshair, move your view to aim at 3D targets.',
+    'fps.clickToLock': 'Click to lock mouse and start aiming',
+    'fps.toUnlock': 'to unlock',
   },
 };
 
