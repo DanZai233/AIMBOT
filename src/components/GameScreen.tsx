@@ -15,6 +15,7 @@ const MODE_LABELS: Record<GameMode, string> = {
   SPIDERSHOT: 'Spidershot',
   MICROFLICK: 'Microflick',
   TRACKING: 'Tracking',
+  FPS3D: 'FPS 3D',
 };
 
 export default function GameScreen({ mode, settings, onGameOver, onQuit }: Props) {

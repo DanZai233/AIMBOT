@@ -1,4 +1,4 @@
-export type GameMode = 'GRIDSHOT' | 'SPIDERSHOT' | 'MICROFLICK' | 'TRACKING';
+export type GameMode = 'GRIDSHOT' | 'SPIDERSHOT' | 'MICROFLICK' | 'TRACKING' | 'FPS3D';
 
 export type GameState = 'MENU' | 'PLAYING' | 'RESULTS';
 
@@ -9,6 +9,33 @@ export type BackgroundTheme = 'dark' | 'grid' | 'gradient' | 'stars';
 export type ColorScheme = 'cyan' | 'red' | 'green' | 'purple' | 'orange';
 export type TargetSizePreset = 'small' | 'medium' | 'large';
 export type SpeedPreset = 'slow' | 'normal' | 'fast';
+
+export type FPS3DMap = 'void' | 'arena' | 'cyber' | 'outdoor' | 'neon';
+export type FPS3DCrosshairStyle = 'cross' | 'dot' | 'circle' | 'crossDot' | 'tcross';
+
+export interface CrosshairConfig {
+  style: FPS3DCrosshairStyle;
+  thickness: number;
+  gapV: number;
+  gapH: number;
+  size: number;
+  opacity: number;
+  dotSize: number;
+}
+
+export interface FPS3DConfig {
+  sensitivity: number;
+  map: FPS3DMap;
+  crosshair: CrosshairConfig;
+}
+
+export const DEFAULT_CROSSHAIR: CrosshairConfig = {
+  style: 'cross', thickness: 2, gapV: 5, gapH: 5, size: 10, opacity: 0.9, dotSize: 1.5,
+};
+
+export const DEFAULT_FPS3D: FPS3DConfig = {
+  sensitivity: 1.0, map: 'void', crosshair: { ...DEFAULT_CROSSHAIR },
+};
 
 export interface SchemeColors {
   primary: string;
@@ -27,6 +54,7 @@ export interface GameSettings {
   background: BackgroundTheme;
   colorScheme: ColorScheme;
   locale: Locale;
+  fps3d: FPS3DConfig;
 }
 
 export const DEFAULT_SETTINGS: GameSettings = {
@@ -38,6 +66,7 @@ export const DEFAULT_SETTINGS: GameSettings = {
   background: 'dark',
   colorScheme: 'cyan',
   locale: 'zh',
+  fps3d: { ...DEFAULT_FPS3D },
 };
 
 export const DURATION_OPTIONS = [15, 30, 60, 120] as const;

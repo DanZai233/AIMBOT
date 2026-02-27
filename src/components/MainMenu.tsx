@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, ElementType } from 'react';
 import { motion } from 'motion/react';
-import { Target, Crosshair, MousePointer2, Activity, Settings, Github } from 'lucide-react';
+import { Target, Crosshair, MousePointer2, Activity, Settings, Github, Box } from 'lucide-react';
 import { GameMode, GameSettings, COLOR_SCHEMES, hexToRgba } from '../types';
 import { t } from '../i18n';
 
@@ -15,6 +15,7 @@ const MODE_ICONS: Record<GameMode, ElementType> = {
   SPIDERSHOT: Crosshair,
   MICROFLICK: MousePointer2,
   TRACKING: Activity,
+  FPS3D: Box,
 };
 
 const MODE_IDS: GameMode[] = ['GRIDSHOT', 'SPIDERSHOT', 'MICROFLICK', 'TRACKING'];
@@ -23,12 +24,14 @@ const MODE_NAMES: Record<GameMode, string> = {
   SPIDERSHOT: 'Spidershot',
   MICROFLICK: 'Microflick',
   TRACKING: 'Tracking',
+  FPS3D: 'FPS 3D',
 };
 const MODE_DESC_KEYS: Record<GameMode, string> = {
   GRIDSHOT: 'mode.gridshot.desc',
   SPIDERSHOT: 'mode.spidershot.desc',
   MICROFLICK: 'mode.microflick.desc',
   TRACKING: 'mode.tracking.desc',
+  FPS3D: 'mode.fps3d.desc',
 };
 
 export default function MainMenu({ onStart, settings, onOpenSettings }: Props) {
@@ -180,6 +183,31 @@ export default function MainMenu({ onStart, settings, onOpenSettings }: Props) {
           );
         })}
       </div>
+
+      {/* FPS 3D Mode — featured card */}
+      <motion.button
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.55, duration: 0.4 }}
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
+        onClick={() => onStart('FPS3D')}
+        className="mt-4 w-full max-w-4xl relative flex items-center gap-5 p-6 text-left rounded-2xl border overflow-hidden backdrop-blur-sm transition-all duration-300 group z-10"
+        style={{ borderColor: `${colors.primary}30`, background: `linear-gradient(135deg, ${colors.bg}, rgba(9,9,11,0.8))` }}
+        onMouseEnter={e => (e.currentTarget.style.borderColor = `${colors.primary}60`)}
+        onMouseLeave={e => (e.currentTarget.style.borderColor = `${colors.primary}30`)}
+      >
+        <div className="p-3 rounded-xl" style={{ background: `${colors.primary}20` }}>
+          <Box className="w-7 h-7" style={{ color: colors.primary }} />
+        </div>
+        <div className="flex-1">
+          <div className="flex items-center gap-3">
+            <h2 className="text-2xl font-bold tracking-tight">FPS 3D</h2>
+            <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full" style={{ background: `${colors.primary}25`, color: colors.primary }}>NEW</span>
+          </div>
+          <p className="text-zinc-400 group-hover:text-zinc-300 transition-colors text-sm mt-1">{t(MODE_DESC_KEYS.FPS3D, l)}</p>
+        </div>
+      </motion.button>
 
       <motion.div
         initial={{ opacity: 0 }}
