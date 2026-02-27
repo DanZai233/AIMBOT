@@ -2,6 +2,7 @@ import React, { useEffect, useRef, ElementType } from 'react';
 import { motion } from 'motion/react';
 import { Target, Crosshair, MousePointer2, Activity, Settings, Github } from 'lucide-react';
 import { GameMode, GameSettings, COLOR_SCHEMES, hexToRgba } from '../types';
+import { t } from '../i18n';
 
 interface Props {
   onStart: (mode: GameMode) => void;
@@ -9,16 +10,31 @@ interface Props {
   onOpenSettings: () => void;
 }
 
-const MODES: { id: GameMode; name: string; description: string; icon: ElementType }[] = [
-  { id: 'GRIDSHOT', name: 'Gridshot', description: '命中网格上出现的3个目标，经典甩枪训练。', icon: Target },
-  { id: 'SPIDERSHOT', name: 'Spidershot', description: '从中心目标甩向随机外围目标再返回。', icon: Crosshair },
-  { id: 'MICROFLICK', name: 'Microflick', description: '小目标出现在屏幕中心附近，训练精准度。', icon: MousePointer2 },
-  { id: 'TRACKING', name: 'Tracking', description: '追踪移动目标，按住鼠标左键得分。', icon: Activity },
-];
+const MODE_ICONS: Record<GameMode, ElementType> = {
+  GRIDSHOT: Target,
+  SPIDERSHOT: Crosshair,
+  MICROFLICK: MousePointer2,
+  TRACKING: Activity,
+};
+
+const MODE_IDS: GameMode[] = ['GRIDSHOT', 'SPIDERSHOT', 'MICROFLICK', 'TRACKING'];
+const MODE_NAMES: Record<GameMode, string> = {
+  GRIDSHOT: 'Gridshot',
+  SPIDERSHOT: 'Spidershot',
+  MICROFLICK: 'Microflick',
+  TRACKING: 'Tracking',
+};
+const MODE_DESC_KEYS: Record<GameMode, string> = {
+  GRIDSHOT: 'mode.gridshot.desc',
+  SPIDERSHOT: 'mode.spidershot.desc',
+  MICROFLICK: 'mode.microflick.desc',
+  TRACKING: 'mode.tracking.desc',
+};
 
 export default function MainMenu({ onStart, settings, onOpenSettings }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const colors = COLOR_SCHEMES[settings.colorScheme];
+  const l = settings.locale;
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -90,7 +106,6 @@ export default function MainMenu({ onStart, settings, onOpenSettings }: Props) {
     <div className="relative min-h-screen flex flex-col items-center justify-center p-6">
       <canvas ref={canvasRef} className="absolute inset-0 pointer-events-none" />
 
-      {/* Settings Button */}
       <motion.button
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -127,22 +142,22 @@ export default function MainMenu({ onStart, settings, onOpenSettings }: Props) {
           </h1>
         </div>
         <p className="text-zinc-400 text-lg max-w-md mx-auto">
-          提升你的鼠标控制、甩枪速度和追踪精度。
+          {t('app.subtitle', l)}
         </p>
       </motion.div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-4xl relative z-10">
-        {MODES.map((mode, idx) => {
-          const Icon = mode.icon;
+        {MODE_IDS.map((modeId, idx) => {
+          const Icon = MODE_ICONS[modeId];
           return (
             <motion.button
-              key={mode.id}
+              key={modeId}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 + idx * 0.08, duration: 0.4 }}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              onClick={() => onStart(mode.id)}
+              onClick={() => onStart(modeId)}
               className="group relative flex flex-col items-start p-6 text-left bg-zinc-900/50 border border-zinc-800 rounded-2xl hover:bg-zinc-800/80 transition-all duration-300 overflow-hidden backdrop-blur-sm"
               style={{ '--hover-border': colors.primary } as React.CSSProperties}
               onMouseEnter={e => (e.currentTarget.style.borderColor = `${colors.primary}50`)}
@@ -152,40 +167,33 @@ export default function MainMenu({ onStart, settings, onOpenSettings }: Props) {
                 className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
                 style={{ background: `linear-gradient(135deg, ${colors.bg}, transparent)` }}
               />
-
               <div className="flex items-center gap-4 mb-3 relative z-10">
-                <div
-                  className="p-3 rounded-xl transition-colors duration-300"
-                  style={{ background: 'rgba(39,39,42,1)' }}
-                >
+                <div className="p-3 rounded-xl transition-colors duration-300" style={{ background: 'rgba(39,39,42,1)' }}>
                   <Icon className="w-6 h-6 group-hover:scale-110 transition-transform duration-300" style={{ color: colors.primary }} />
                 </div>
-                <h2 className="text-2xl font-bold tracking-tight">{mode.name}</h2>
+                <h2 className="text-2xl font-bold tracking-tight">{MODE_NAMES[modeId]}</h2>
               </div>
-
               <p className="text-zinc-400 group-hover:text-zinc-300 transition-colors duration-300 relative z-10">
-                {mode.description}
+                {t(MODE_DESC_KEYS[modeId], l)}
               </p>
             </motion.button>
           );
         })}
       </div>
 
-      {/* Settings Summary */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.6 }}
         className="mt-8 flex items-center gap-3 text-xs text-zinc-500 relative z-10"
       >
-        <span>{settings.duration}秒</span>
+        <span>{settings.duration}{t('summary.sec', l)}</span>
         <span className="w-1 h-1 rounded-full bg-zinc-700" />
-        <span>大小: {settings.targetSize === 'small' ? '小' : settings.targetSize === 'medium' ? '中' : '大'}</span>
+        <span>{t('summary.size', l)}: {t(`size.${settings.targetSize}`, l)}</span>
         <span className="w-1 h-1 rounded-full bg-zinc-700" />
-        <span>速度: {settings.speed === 'slow' ? '慢' : settings.speed === 'normal' ? '正常' : '快'}</span>
+        <span>{t('summary.speed', l)}: {t(`speed.${settings.speed}`, l)}</span>
       </motion.div>
 
-      {/* GitHub Link */}
       <motion.a
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}

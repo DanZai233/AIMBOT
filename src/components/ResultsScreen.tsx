@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { GameMode, GameStats, GameSettings, COLOR_SCHEMES } from '../types';
 import { RotateCcw, Home, Trophy, Target, MousePointerClick, Clock, Star, Github } from 'lucide-react';
+import { t } from '../i18n';
 
 interface Props {
   stats: GameStats;
@@ -46,6 +47,7 @@ const MODE_LABELS: Record<GameMode, string> = {
 export default function ResultsScreen({ stats, mode, settings, onRetry, onMenu }: Props) {
   const colors = COLOR_SCHEMES[settings.colorScheme];
   const grade = getGrade(stats.accuracy);
+  const l = settings.locale;
 
   const animScore = useAnimatedNumber(stats.score, 1200);
   const animAccuracy = useAnimatedNumber(Math.round(stats.accuracy * 10), 1000);
@@ -67,7 +69,6 @@ export default function ResultsScreen({ stats, mode, settings, onRetry, onMenu }
         transition={{ duration: 0.4 }}
         className="w-full max-w-2xl bg-zinc-900/80 border border-zinc-800 rounded-3xl p-8 md:p-12 shadow-2xl backdrop-blur-xl"
       >
-        {/* Header */}
         <div className="text-center mb-8">
           <motion.h1
             initial={{ opacity: 0, y: -10 }}
@@ -80,14 +81,13 @@ export default function ResultsScreen({ stats, mode, settings, onRetry, onMenu }
               WebkitTextFillColor: 'transparent',
             }}
           >
-            RESULTS
+            {t('results.title', l)}
           </motion.h1>
           <p className="text-zinc-400 font-medium uppercase tracking-widest text-sm">
             {MODE_LABELS[mode]} MODE
           </p>
         </div>
 
-        {/* Grade Badge */}
         <motion.div
           initial={{ opacity: 0, scale: 0 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -108,95 +108,53 @@ export default function ResultsScreen({ stats, mode, settings, onRetry, onMenu }
         </motion.div>
 
         <div className="grid grid-cols-2 gap-4 mb-8">
-          {/* Score */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="col-span-2 bg-zinc-800/50 rounded-2xl p-6 flex flex-col items-center justify-center border border-zinc-700/50"
-          >
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
+            className="col-span-2 bg-zinc-800/50 rounded-2xl p-6 flex flex-col items-center justify-center border border-zinc-700/50">
             <Trophy className="w-7 h-7 text-yellow-500 mb-2" />
-            <div className="text-5xl font-mono font-bold text-white mb-1">
-              {animScore.toLocaleString()}
-            </div>
-            <div className="text-zinc-400 text-xs font-medium uppercase tracking-wider">
-              最终得分
-            </div>
+            <div className="text-5xl font-mono font-bold text-white mb-1">{animScore.toLocaleString()}</div>
+            <div className="text-zinc-400 text-xs font-medium uppercase tracking-wider">{t('results.score', l)}</div>
           </motion.div>
 
-          {/* Accuracy */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-            className="bg-zinc-800/50 rounded-2xl p-5 flex flex-col items-center justify-center border border-zinc-700/50"
-          >
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}
+            className="bg-zinc-800/50 rounded-2xl p-5 flex flex-col items-center justify-center border border-zinc-700/50">
             <Target className="w-6 h-6 mb-2" style={{ color: colors.primary }} />
-            <div className="text-3xl font-mono font-bold text-white mb-1">
-              {(animAccuracy / 10).toFixed(1)}%
-            </div>
-            <div className="text-zinc-400 text-xs font-medium uppercase tracking-wider">
-              精准度
-            </div>
+            <div className="text-3xl font-mono font-bold text-white mb-1">{(animAccuracy / 10).toFixed(1)}%</div>
+            <div className="text-zinc-400 text-xs font-medium uppercase tracking-wider">{t('results.accuracy', l)}</div>
           </motion.div>
 
-          {/* Hits / Misses */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.45 }}
-            className="bg-zinc-800/50 rounded-2xl p-5 flex flex-col items-center justify-center border border-zinc-700/50"
-          >
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }}
+            className="bg-zinc-800/50 rounded-2xl p-5 flex flex-col items-center justify-center border border-zinc-700/50">
             <MousePointerClick className="w-6 h-6 text-rose-500 mb-2" />
-            <div className="text-3xl font-mono font-bold text-white mb-1">
-              {animHits} <span className="text-zinc-600">/</span> {animMisses}
-            </div>
-            <div className="text-zinc-400 text-xs font-medium uppercase tracking-wider">
-              命中 / 失误
-            </div>
+            <div className="text-3xl font-mono font-bold text-white mb-1">{animHits} <span className="text-zinc-600">/</span> {animMisses}</div>
+            <div className="text-zinc-400 text-xs font-medium uppercase tracking-wider">{t('results.hitsMisses', l)}</div>
           </motion.div>
 
-          {/* Time */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
-            className="col-span-2 bg-zinc-800/50 rounded-2xl p-5 flex flex-col items-center justify-center border border-zinc-700/50"
-          >
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}
+            className="col-span-2 bg-zinc-800/50 rounded-2xl p-5 flex flex-col items-center justify-center border border-zinc-700/50">
             <Clock className="w-6 h-6 text-emerald-500 mb-2" />
-            <div className="text-3xl font-mono font-bold text-white mb-1">
-              {formatTime(stats.totalTime)}
-            </div>
-            <div className="text-zinc-400 text-xs font-medium uppercase tracking-wider">
-              训练时长
-            </div>
+            <div className="text-3xl font-mono font-bold text-white mb-1">{formatTime(stats.totalTime)}</div>
+            <div className="text-zinc-400 text-xs font-medium uppercase tracking-wider">{t('results.duration', l)}</div>
           </motion.div>
         </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6 }}
-          className="flex gap-4"
-        >
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }} className="flex gap-4">
           <button
             onClick={onRetry}
             className="flex-1 flex items-center justify-center gap-2 font-bold py-4 px-6 rounded-xl transition-all hover:brightness-110 active:scale-[0.98]"
             style={{ background: colors.primary, color: '#fff' }}
           >
             <RotateCcw className="w-5 h-5" />
-            再来一局
+            {t('results.retry', l)}
           </button>
           <button
             onClick={onMenu}
             className="flex-1 flex items-center justify-center gap-2 bg-zinc-800 hover:bg-zinc-700 text-white font-bold py-4 px-6 rounded-xl transition-all active:scale-[0.98]"
           >
             <Home className="w-5 h-5" />
-            主菜单
+            {t('results.menu', l)}
           </button>
         </motion.div>
 
-        {/* Star on GitHub */}
         <motion.a
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -207,7 +165,7 @@ export default function ResultsScreen({ stats, mode, settings, onRetry, onMenu }
           className="mt-6 flex items-center justify-center gap-2 text-zinc-500 hover:text-yellow-400 transition-colors group"
         >
           <Star className="w-4 h-4 group-hover:fill-yellow-400 transition-all" />
-          <span className="text-sm">觉得好玩？给个 Star 支持一下吧</span>
+          <span className="text-sm">{t('results.star', l)}</span>
           <Github className="w-4 h-4" />
         </motion.a>
       </motion.div>
