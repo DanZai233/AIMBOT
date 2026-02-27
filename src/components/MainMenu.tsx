@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, ElementType } from 'react';
 import { motion } from 'motion/react';
-import { Target, Crosshair, MousePointer2, Activity, Settings, Github, Box } from 'lucide-react';
+import { Target, Crosshair, MousePointer2, Activity, Settings, Github, Box, Trophy } from 'lucide-react';
 import { GameMode, GameSettings, COLOR_SCHEMES, hexToRgba } from '../types';
 import { t } from '../i18n';
 
@@ -8,6 +8,7 @@ interface Props {
   onStart: (mode: GameMode) => void;
   settings: GameSettings;
   onOpenSettings: () => void;
+  onOpenLeaderboard: () => void;
 }
 
 const MODE_ICONS: Record<GameMode, ElementType> = {
@@ -34,7 +35,7 @@ const MODE_DESC_KEYS: Record<GameMode, string> = {
   FPS3D: 'mode.fps3d.desc',
 };
 
-export default function MainMenu({ onStart, settings, onOpenSettings }: Props) {
+export default function MainMenu({ onStart, settings, onOpenSettings, onOpenLeaderboard }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const colors = COLOR_SCHEMES[settings.colorScheme];
   const l = settings.locale;
@@ -109,15 +110,18 @@ export default function MainMenu({ onStart, settings, onOpenSettings }: Props) {
     <div className="relative min-h-screen flex flex-col items-center justify-center p-6">
       <canvas ref={canvasRef} className="absolute inset-0 pointer-events-none" />
 
-      <motion.button
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.5 }}
-        onClick={onOpenSettings}
-        className="absolute top-6 right-6 p-3 rounded-xl bg-zinc-900/60 border border-zinc-800 hover:border-zinc-700 text-zinc-400 hover:text-zinc-200 transition-all backdrop-blur-sm z-10"
-      >
-        <Settings className="w-5 h-5" />
-      </motion.button>
+      <div className="absolute top-6 right-6 flex gap-2 z-10">
+        <motion.button initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}
+          onClick={onOpenLeaderboard}
+          className="p-3 rounded-xl bg-zinc-900/60 border border-zinc-800 hover:border-zinc-700 text-zinc-400 hover:text-zinc-200 transition-all backdrop-blur-sm">
+          <Trophy className="w-5 h-5" />
+        </motion.button>
+        <motion.button initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}
+          onClick={onOpenSettings}
+          className="p-3 rounded-xl bg-zinc-900/60 border border-zinc-800 hover:border-zinc-700 text-zinc-400 hover:text-zinc-200 transition-all backdrop-blur-sm">
+          <Settings className="w-5 h-5" />
+        </motion.button>
+      </div>
 
       <motion.div
         initial={{ opacity: 0, y: -20 }}

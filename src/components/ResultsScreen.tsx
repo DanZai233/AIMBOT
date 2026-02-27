@@ -1,15 +1,18 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { GameMode, GameStats, GameSettings, COLOR_SCHEMES } from '../types';
-import { RotateCcw, Home, Trophy, Target, MousePointerClick, Clock, Star, Github } from 'lucide-react';
+import { GameMode, GameStats, GameSettings, COLOR_SCHEMES, PlayerIdentity } from '../types';
+import { RotateCcw, Home, Trophy, Target, MousePointerClick, Clock, Star, Github, Upload, BarChart3 } from 'lucide-react';
 import { t } from '../i18n';
 
 interface Props {
   stats: GameStats;
   mode: GameMode;
   settings: GameSettings;
+  player: PlayerIdentity | null;
   onRetry: () => void;
   onMenu: () => void;
+  onSubmitScore: () => void;
+  onViewLeaderboard: () => void;
 }
 
 function useAnimatedNumber(target: number, duration = 1000): number {
@@ -45,7 +48,8 @@ const MODE_LABELS: Record<GameMode, string> = {
   FPS3D: 'FPS 3D',
 };
 
-export default function ResultsScreen({ stats, mode, settings, onRetry, onMenu }: Props) {
+export default function ResultsScreen({ stats, mode, settings, player, onRetry, onMenu, onSubmitScore, onViewLeaderboard }: Props) {
+  const [submitState, setSubmitState] = useState<'idle' | 'loading' | 'done'>('idle');
   const colors = COLOR_SCHEMES[settings.colorScheme];
   const grade = getGrade(stats.accuracy);
   const l = settings.locale;
@@ -153,6 +157,39 @@ export default function ResultsScreen({ stats, mode, settings, onRetry, onMenu }
           >
             <Home className="w-5 h-5" />
             {t('results.menu', l)}
+          </button>
+        </motion.div>
+
+        {/* Leaderboard Actions */}
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.65 }}
+          className="flex gap-3 mt-4">
+          <button
+            onClick={async () => {
+              if (submitState !== 'idle') return;
+              if (!player) { onSubmitScore(); return; }
+              setSubmitState('loading');
+              try {
+                const res = await fetch('/api/leaderboard', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ mode, name: player.name, tag: player.tag, score: stats.score, accuracy: stats.accuracy, hits: stats.hits, misses: stats.misses }),
+                });
+                setSubmitState(res.ok ? 'done' : 'idle');
+              } catch { setSubmitState('idle'); }
+            }}
+            disabled={submitState === 'done'}
+            className="flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-sm font-semibold transition-all border border-zinc-700 hover:border-zinc-600"
+            style={submitState === 'done' ? { borderColor: '#22c55e40', color: '#22c55e' } : { color: '#d4d4d8' }}
+          >
+            <Upload className="w-4 h-4" />
+            {submitState === 'loading' ? t('lb.submitting', l) : submitState === 'done' ? t('lb.submitted', l) : t('lb.submit', l)}
+          </button>
+          <button
+            onClick={onViewLeaderboard}
+            className="flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-sm font-semibold border border-zinc-700 hover:border-zinc-600 text-zinc-300 transition-all"
+          >
+            <BarChart3 className="w-4 h-4" />
+            {t('lb.viewAll', l)}
           </button>
         </motion.div>
 
