@@ -2,6 +2,7 @@ export type GameMode = 'GRIDSHOT' | 'SPIDERSHOT' | 'MICROFLICK' | 'TRACKING';
 
 export type GameState = 'MENU' | 'PLAYING' | 'RESULTS';
 
+export type Locale = 'zh' | 'en';
 export type TargetShape = 'circle' | 'diamond' | 'star' | 'hexagon' | 'triangle';
 export type CursorStyle = 'crosshair' | 'dot' | 'ring' | 'precise';
 export type BackgroundTheme = 'dark' | 'grid' | 'gradient' | 'stars';
@@ -25,6 +26,7 @@ export interface GameSettings {
   cursorStyle: CursorStyle;
   background: BackgroundTheme;
   colorScheme: ColorScheme;
+  locale: Locale;
 }
 
 export const DEFAULT_SETTINGS: GameSettings = {
@@ -35,6 +37,7 @@ export const DEFAULT_SETTINGS: GameSettings = {
   cursorStyle: 'crosshair',
   background: 'dark',
   colorScheme: 'cyan',
+  locale: 'zh',
 };
 
 export const DURATION_OPTIONS = [15, 30, 60, 120] as const;

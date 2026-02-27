@@ -4,8 +4,9 @@ import { X, RotateCcw } from 'lucide-react';
 import {
   GameSettings, DEFAULT_SETTINGS, DURATION_OPTIONS,
   TargetShape, CursorStyle, BackgroundTheme, ColorScheme,
-  TargetSizePreset, SpeedPreset, COLOR_SCHEMES,
+  TargetSizePreset, SpeedPreset, COLOR_SCHEMES, Locale,
 } from '../types';
+import { t } from '../i18n';
 
 interface Props {
   settings: GameSettings;
@@ -42,61 +43,28 @@ function Segment<T extends string>({
   );
 }
 
-const TARGET_SHAPES: { value: TargetShape; label: string; svg: React.ReactNode }[] = [
-  {
-    value: 'circle', label: '圆形',
-    svg: <svg viewBox="0 0 24 24" width="28" height="28"><circle cx="12" cy="12" r="10" fill="currentColor" opacity=".7"/><circle cx="12" cy="12" r="6" fill="currentColor"/><circle cx="12" cy="12" r="2" fill="white"/></svg>,
-  },
-  {
-    value: 'diamond', label: '菱形',
-    svg: <svg viewBox="0 0 24 24" width="28" height="28"><polygon points="12,2 22,12 12,22 2,12" fill="currentColor" opacity=".7"/><polygon points="12,6 18,12 12,18 6,12" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="white"/></svg>,
-  },
-  {
-    value: 'star', label: '星形',
-    svg: <svg viewBox="0 0 24 24" width="28" height="28"><polygon points="12,2 14.5,9 22,9.5 16.5,14 18,22 12,18 6,22 7.5,14 2,9.5 9.5,9" fill="currentColor" opacity=".7"/><circle cx="12" cy="12" r="1.5" fill="white"/></svg>,
-  },
-  {
-    value: 'hexagon', label: '六边形',
-    svg: <svg viewBox="0 0 24 24" width="28" height="28"><polygon points="12,2 21.5,7 21.5,17 12,22 2.5,17 2.5,7" fill="currentColor" opacity=".7"/><circle cx="12" cy="12" r="1.5" fill="white"/></svg>,
-  },
-  {
-    value: 'triangle', label: '三角形',
-    svg: <svg viewBox="0 0 24 24" width="28" height="28"><polygon points="12,3 22,21 2,21" fill="currentColor" opacity=".7"/><circle cx="12" cy="13" r="1.5" fill="white"/></svg>,
-  },
-];
-
-const CURSOR_STYLES: { value: CursorStyle; label: string; svg: React.ReactNode }[] = [
-  {
-    value: 'crosshair', label: '十字线',
-    svg: <svg viewBox="0 0 24 24" width="28" height="28"><line x1="12" y1="2" x2="12" y2="9" stroke="currentColor" strokeWidth="1.5"/><line x1="12" y1="15" x2="12" y2="22" stroke="currentColor" strokeWidth="1.5"/><line x1="2" y1="12" x2="9" y2="12" stroke="currentColor" strokeWidth="1.5"/><line x1="15" y1="12" x2="22" y2="12" stroke="currentColor" strokeWidth="1.5"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg>,
-  },
-  {
-    value: 'dot', label: '圆点',
-    svg: <svg viewBox="0 0 24 24" width="28" height="28"><circle cx="12" cy="12" r="4" fill="currentColor"/></svg>,
-  },
-  {
-    value: 'ring', label: '圆环',
-    svg: <svg viewBox="0 0 24 24" width="28" height="28"><circle cx="12" cy="12" r="8" stroke="currentColor" strokeWidth="1.5" fill="none"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg>,
-  },
-  {
-    value: 'precise', label: '精确',
-    svg: <svg viewBox="0 0 24 24" width="28" height="28"><line x1="12" y1="4" x2="12" y2="20" stroke="currentColor" strokeWidth="1"/><line x1="4" y1="12" x2="20" y2="12" stroke="currentColor" strokeWidth="1"/><circle cx="12" cy="12" r="2.5" fill="currentColor"/></svg>,
-  },
-];
-
-const BACKGROUNDS: { value: BackgroundTheme; label: string; desc: string }[] = [
-  { value: 'dark', label: '暗黑', desc: '纯暗色背景' },
-  { value: 'grid', label: '网格', desc: '暗色网格线' },
-  { value: 'gradient', label: '渐变', desc: '动态渐变' },
-  { value: 'stars', label: '星空', desc: '闪烁星点' },
-];
-
-const COLOR_OPTIONS: ColorScheme[] = ['cyan', 'red', 'green', 'purple', 'orange'];
-const COLOR_LABELS: Record<ColorScheme, string> = {
-  cyan: '青', red: '红', green: '绿', purple: '紫', orange: '橙',
+const TARGET_SHAPE_SVGS: Record<TargetShape, React.ReactNode> = {
+  circle: <svg viewBox="0 0 24 24" width="28" height="28"><circle cx="12" cy="12" r="10" fill="currentColor" opacity=".7"/><circle cx="12" cy="12" r="6" fill="currentColor"/><circle cx="12" cy="12" r="2" fill="white"/></svg>,
+  diamond: <svg viewBox="0 0 24 24" width="28" height="28"><polygon points="12,2 22,12 12,22 2,12" fill="currentColor" opacity=".7"/><polygon points="12,6 18,12 12,18 6,12" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="white"/></svg>,
+  star: <svg viewBox="0 0 24 24" width="28" height="28"><polygon points="12,2 14.5,9 22,9.5 16.5,14 18,22 12,18 6,22 7.5,14 2,9.5 9.5,9" fill="currentColor" opacity=".7"/><circle cx="12" cy="12" r="1.5" fill="white"/></svg>,
+  hexagon: <svg viewBox="0 0 24 24" width="28" height="28"><polygon points="12,2 21.5,7 21.5,17 12,22 2.5,17 2.5,7" fill="currentColor" opacity=".7"/><circle cx="12" cy="12" r="1.5" fill="white"/></svg>,
+  triangle: <svg viewBox="0 0 24 24" width="28" height="28"><polygon points="12,3 22,21 2,21" fill="currentColor" opacity=".7"/><circle cx="12" cy="13" r="1.5" fill="white"/></svg>,
 };
 
+const CURSOR_STYLE_SVGS: Record<CursorStyle, React.ReactNode> = {
+  crosshair: <svg viewBox="0 0 24 24" width="28" height="28"><line x1="12" y1="2" x2="12" y2="9" stroke="currentColor" strokeWidth="1.5"/><line x1="12" y1="15" x2="12" y2="22" stroke="currentColor" strokeWidth="1.5"/><line x1="2" y1="12" x2="9" y2="12" stroke="currentColor" strokeWidth="1.5"/><line x1="15" y1="12" x2="22" y2="12" stroke="currentColor" strokeWidth="1.5"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg>,
+  dot: <svg viewBox="0 0 24 24" width="28" height="28"><circle cx="12" cy="12" r="4" fill="currentColor"/></svg>,
+  ring: <svg viewBox="0 0 24 24" width="28" height="28"><circle cx="12" cy="12" r="8" stroke="currentColor" strokeWidth="1.5" fill="none"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg>,
+  precise: <svg viewBox="0 0 24 24" width="28" height="28"><line x1="12" y1="4" x2="12" y2="20" stroke="currentColor" strokeWidth="1"/><line x1="4" y1="12" x2="20" y2="12" stroke="currentColor" strokeWidth="1"/><circle cx="12" cy="12" r="2.5" fill="currentColor"/></svg>,
+};
+
+const ALL_SHAPES: TargetShape[] = ['circle', 'diamond', 'star', 'hexagon', 'triangle'];
+const ALL_CURSORS: CursorStyle[] = ['crosshair', 'dot', 'ring', 'precise'];
+const ALL_BACKGROUNDS: BackgroundTheme[] = ['dark', 'grid', 'gradient', 'stars'];
+const COLOR_OPTIONS: ColorScheme[] = ['cyan', 'red', 'green', 'purple', 'orange'];
+
 export default function SettingsPanel({ settings, onChange, onClose, isOpen }: Props) {
+  const l = settings.locale;
   const update = <K extends keyof GameSettings>(key: K, val: GameSettings[K]) => {
     onChange({ ...settings, [key]: val });
   };
@@ -124,12 +92,12 @@ export default function SettingsPanel({ settings, onChange, onClose, isOpen }: P
             <div className="p-6">
               {/* Header */}
               <div className="flex items-center justify-between mb-8">
-                <h2 className="text-xl font-bold text-zinc-100">游戏设置</h2>
+                <h2 className="text-xl font-bold text-zinc-100">{t('settings.title', l)}</h2>
                 <div className="flex gap-2">
                   <button
-                    onClick={() => onChange({ ...DEFAULT_SETTINGS })}
+                    onClick={() => onChange({ ...DEFAULT_SETTINGS, locale: l })}
                     className="p-2 rounded-lg hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200 transition-colors"
-                    title="重置默认"
+                    title={t('settings.reset', l)}
                   >
                     <RotateCcw className="w-4 h-4" />
                   </button>
@@ -142,24 +110,36 @@ export default function SettingsPanel({ settings, onChange, onClose, isOpen }: P
                 </div>
               </div>
 
+              {/* Language */}
+              <Segment<Locale>
+                label={t('settings.language', l)}
+                options={[
+                  { value: 'zh', label: '中文' },
+                  { value: 'en', label: 'English' },
+                ]}
+                value={l}
+                onChange={v => update('locale', v)}
+                accentColor={accent}
+              />
+
               {/* Game Parameters */}
               <div className="mb-8">
-                <div className="text-xs text-zinc-500 uppercase tracking-widest mb-4 font-semibold">游戏参数</div>
+                <div className="text-xs text-zinc-500 uppercase tracking-widest mb-4 font-semibold">{t('settings.section.game', l)}</div>
 
                 <Segment
-                  label="训练时间"
-                  options={DURATION_OPTIONS.map(d => ({ value: String(d), label: `${d}秒` }))}
+                  label={t('settings.duration', l)}
+                  options={DURATION_OPTIONS.map(d => ({ value: String(d), label: `${d}${t('summary.sec', l)}` }))}
                   value={String(settings.duration)}
                   onChange={v => update('duration', Number(v))}
                   accentColor={accent}
                 />
 
                 <Segment<TargetSizePreset>
-                  label="目标大小"
+                  label={t('settings.targetSize', l)}
                   options={[
-                    { value: 'small', label: '小' },
-                    { value: 'medium', label: '中' },
-                    { value: 'large', label: '大' },
+                    { value: 'small', label: t('size.small', l) },
+                    { value: 'medium', label: t('size.medium', l) },
+                    { value: 'large', label: t('size.large', l) },
                   ]}
                   value={settings.targetSize}
                   onChange={v => update('targetSize', v)}
@@ -167,11 +147,11 @@ export default function SettingsPanel({ settings, onChange, onClose, isOpen }: P
                 />
 
                 <Segment<SpeedPreset>
-                  label="目标速度"
+                  label={t('settings.speed', l)}
                   options={[
-                    { value: 'slow', label: '慢速' },
-                    { value: 'normal', label: '正常' },
-                    { value: 'fast', label: '快速' },
+                    { value: 'slow', label: t('speed.slow', l) },
+                    { value: 'normal', label: t('speed.normal', l) },
+                    { value: 'fast', label: t('speed.fast', l) },
                   ]}
                   value={settings.speed}
                   onChange={v => update('speed', v)}
@@ -181,26 +161,26 @@ export default function SettingsPanel({ settings, onChange, onClose, isOpen }: P
 
               {/* Personalization */}
               <div>
-                <div className="text-xs text-zinc-500 uppercase tracking-widest mb-4 font-semibold">个性化</div>
+                <div className="text-xs text-zinc-500 uppercase tracking-widest mb-4 font-semibold">{t('settings.section.personal', l)}</div>
 
                 {/* Target Shape */}
                 <div className="mb-5">
-                  <label className="text-xs text-zinc-400 mb-2 block font-medium uppercase tracking-wider">目标形状</label>
+                  <label className="text-xs text-zinc-400 mb-2 block font-medium uppercase tracking-wider">{t('settings.shape', l)}</label>
                   <div className="flex gap-2">
-                    {TARGET_SHAPES.map(s => (
+                    {ALL_SHAPES.map(s => (
                       <button
-                        key={s.value}
-                        onClick={() => update('targetShape', s.value)}
+                        key={s}
+                        onClick={() => update('targetShape', s)}
                         className="flex flex-col items-center gap-1 p-2 rounded-lg transition-all border"
                         style={{
-                          borderColor: settings.targetShape === s.value ? accent : 'transparent',
-                          background: settings.targetShape === s.value ? `${accent}15` : 'rgba(39,39,42,0.5)',
-                          color: settings.targetShape === s.value ? accent : '#a1a1aa',
+                          borderColor: settings.targetShape === s ? accent : 'transparent',
+                          background: settings.targetShape === s ? `${accent}15` : 'rgba(39,39,42,0.5)',
+                          color: settings.targetShape === s ? accent : '#a1a1aa',
                         }}
-                        title={s.label}
+                        title={t(`shape.${s}`, l)}
                       >
-                        {s.svg}
-                        <span className="text-[10px]">{s.label}</span>
+                        {TARGET_SHAPE_SVGS[s]}
+                        <span className="text-[10px]">{t(`shape.${s}`, l)}</span>
                       </button>
                     ))}
                   </div>
@@ -208,22 +188,22 @@ export default function SettingsPanel({ settings, onChange, onClose, isOpen }: P
 
                 {/* Cursor Style */}
                 <div className="mb-5">
-                  <label className="text-xs text-zinc-400 mb-2 block font-medium uppercase tracking-wider">光标样式</label>
+                  <label className="text-xs text-zinc-400 mb-2 block font-medium uppercase tracking-wider">{t('settings.cursor', l)}</label>
                   <div className="flex gap-2">
-                    {CURSOR_STYLES.map(c => (
+                    {ALL_CURSORS.map(c => (
                       <button
-                        key={c.value}
-                        onClick={() => update('cursorStyle', c.value)}
+                        key={c}
+                        onClick={() => update('cursorStyle', c)}
                         className="flex flex-col items-center gap-1 p-2 rounded-lg transition-all border"
                         style={{
-                          borderColor: settings.cursorStyle === c.value ? accent : 'transparent',
-                          background: settings.cursorStyle === c.value ? `${accent}15` : 'rgba(39,39,42,0.5)',
-                          color: settings.cursorStyle === c.value ? accent : '#a1a1aa',
+                          borderColor: settings.cursorStyle === c ? accent : 'transparent',
+                          background: settings.cursorStyle === c ? `${accent}15` : 'rgba(39,39,42,0.5)',
+                          color: settings.cursorStyle === c ? accent : '#a1a1aa',
                         }}
-                        title={c.label}
+                        title={t(`cursor.${c}`, l)}
                       >
-                        {c.svg}
-                        <span className="text-[10px]">{c.label}</span>
+                        {CURSOR_STYLE_SVGS[c]}
+                        <span className="text-[10px]">{t(`cursor.${c}`, l)}</span>
                       </button>
                     ))}
                   </div>
@@ -231,7 +211,7 @@ export default function SettingsPanel({ settings, onChange, onClose, isOpen }: P
 
                 {/* Color Scheme */}
                 <div className="mb-5">
-                  <label className="text-xs text-zinc-400 mb-2 block font-medium uppercase tracking-wider">主题配色</label>
+                  <label className="text-xs text-zinc-400 mb-2 block font-medium uppercase tracking-wider">{t('settings.color', l)}</label>
                   <div className="flex gap-2">
                     {COLOR_OPTIONS.map(c => (
                       <button
@@ -250,7 +230,7 @@ export default function SettingsPanel({ settings, onChange, onClose, isOpen }: P
                             boxShadow: settings.colorScheme === c ? `0 0 12px ${COLOR_SCHEMES[c].glow}` : 'none',
                           }}
                         />
-                        <span className="text-[10px] text-zinc-400">{COLOR_LABELS[c]}</span>
+                        <span className="text-[10px] text-zinc-400">{t(`color.${c}`, l)}</span>
                       </button>
                     ))}
                   </div>
@@ -258,25 +238,25 @@ export default function SettingsPanel({ settings, onChange, onClose, isOpen }: P
 
                 {/* Background */}
                 <div className="mb-5">
-                  <label className="text-xs text-zinc-400 mb-2 block font-medium uppercase tracking-wider">背景主题</label>
+                  <label className="text-xs text-zinc-400 mb-2 block font-medium uppercase tracking-wider">{t('settings.background', l)}</label>
                   <div className="grid grid-cols-2 gap-2">
-                    {BACKGROUNDS.map(bg => (
+                    {ALL_BACKGROUNDS.map(bg => (
                       <button
-                        key={bg.value}
-                        onClick={() => update('background', bg.value)}
+                        key={bg}
+                        onClick={() => update('background', bg)}
                         className="p-3 rounded-lg text-left transition-all border"
                         style={{
-                          borderColor: settings.background === bg.value ? accent : 'transparent',
-                          background: settings.background === bg.value ? `${accent}15` : 'rgba(39,39,42,0.5)',
+                          borderColor: settings.background === bg ? accent : 'transparent',
+                          background: settings.background === bg ? `${accent}15` : 'rgba(39,39,42,0.5)',
                         }}
                       >
                         <div
                           className="text-sm font-medium mb-0.5"
-                          style={{ color: settings.background === bg.value ? accent : '#e4e4e7' }}
+                          style={{ color: settings.background === bg ? accent : '#e4e4e7' }}
                         >
-                          {bg.label}
+                          {t(`bg.${bg}`, l)}
                         </div>
-                        <div className="text-[10px] text-zinc-500">{bg.desc}</div>
+                        <div className="text-[10px] text-zinc-500">{t(`bg.${bg}.desc`, l)}</div>
                       </button>
                     ))}
                   </div>
