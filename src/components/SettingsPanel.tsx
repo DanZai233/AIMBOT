@@ -5,6 +5,7 @@ import {
   GameSettings, DEFAULT_SETTINGS, DURATION_OPTIONS,
   TargetShape, CursorStyle, BackgroundTheme, ColorScheme,
   TargetSizePreset, SpeedPreset, COLOR_SCHEMES, Locale,
+  FPS3DMap, FPS3DCrosshairStyle, FPS3DConfig, CrosshairConfig,
 } from '../types';
 import { t } from '../i18n';
 
@@ -67,6 +68,14 @@ export default function SettingsPanel({ settings, onChange, onClose, isOpen }: P
   const l = settings.locale;
   const update = <K extends keyof GameSettings>(key: K, val: GameSettings[K]) => {
     onChange({ ...settings, [key]: val });
+  };
+  const fps = settings.fps3d;
+  const xh = fps.crosshair;
+  const updateFps = (patch: Partial<FPS3DConfig>) => {
+    onChange({ ...settings, fps3d: { ...fps, ...patch } });
+  };
+  const updateCH = (patch: Partial<CrosshairConfig>) => {
+    onChange({ ...settings, fps3d: { ...fps, crosshair: { ...xh, ...patch } } });
   };
 
   const accent = COLOR_SCHEMES[settings.colorScheme].primary;
@@ -262,10 +271,129 @@ export default function SettingsPanel({ settings, onChange, onClose, isOpen }: P
                   </div>
                 </div>
               </div>
+
+              {/* FPS 3D Section */}
+              <div className="mt-8">
+                <div className="text-xs text-zinc-500 uppercase tracking-widest mb-4 font-semibold">{t('settings.section.fps3d', l)}</div>
+
+                {/* Sensitivity */}
+                <RangeSlider label={t('settings.sensitivity', l)} value={fps.sensitivity} min={0.1} max={5} step={0.1}
+                  onChange={v => updateFps({ sensitivity: v })} accent={accent} suffix="x" />
+
+                {/* Map */}
+                <div className="mb-5">
+                  <label className="text-xs text-zinc-400 mb-2 block font-medium uppercase tracking-wider">{t('settings.map', l)}</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {ALL_MAPS.map(m => (
+                      <button key={m} onClick={() => updateFps({ map: m })}
+                        className="p-3 rounded-lg text-left transition-all border"
+                        style={{ borderColor: fps.map === m ? accent : 'transparent', background: fps.map === m ? `${accent}15` : 'rgba(39,39,42,0.5)' }}>
+                        <div className="text-sm font-medium mb-0.5" style={{ color: fps.map === m ? accent : '#e4e4e7' }}>{t(`map.${m}`, l)}</div>
+                        <div className="text-[10px] text-zinc-500">{t(`map.${m}.desc`, l)}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Crosshair Style */}
+                <div className="mb-5">
+                  <label className="text-xs text-zinc-400 mb-2 block font-medium uppercase tracking-wider">{t('settings.crosshairStyle', l)}</label>
+                  <div className="flex gap-2">
+                    {ALL_XHAIR_STYLES.map(s => (
+                      <button key={s} onClick={() => updateCH({ style: s })}
+                        className="flex flex-col items-center gap-1 p-2 rounded-lg transition-all border"
+                        style={{ borderColor: xh.style === s ? accent : 'transparent', background: xh.style === s ? `${accent}15` : 'rgba(39,39,42,0.5)', color: xh.style === s ? accent : '#a1a1aa' }}>
+                        <CrosshairPreview style={s} color={xh.style === s ? accent : '#a1a1aa'} />
+                        <span className="text-[10px]">{t(`xhair.${s}`, l)}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Crosshair live preview */}
+                <div className="mb-4 flex justify-center">
+                  <div className="w-20 h-20 bg-zinc-800/80 rounded-lg flex items-center justify-center border border-zinc-700/50">
+                    <CrosshairPreviewFull config={xh} color={accent} />
+                  </div>
+                </div>
+
+                {/* Crosshair detail sliders */}
+                <div className="mb-2">
+                  <label className="text-xs text-zinc-400 mb-2 block font-medium uppercase tracking-wider">{t('settings.crosshairDetail', l)}</label>
+                </div>
+                <RangeSlider label={t('settings.thickness', l)} value={xh.thickness} min={1} max={5} step={0.5} onChange={v => updateCH({ thickness: v })} accent={accent} />
+                <RangeSlider label={t('settings.gapV', l)} value={xh.gapV} min={0} max={15} step={1} onChange={v => updateCH({ gapV: v })} accent={accent} suffix="px" />
+                <RangeSlider label={t('settings.gapH', l)} value={xh.gapH} min={0} max={15} step={1} onChange={v => updateCH({ gapH: v })} accent={accent} suffix="px" />
+                <RangeSlider label={t('settings.lineSize', l)} value={xh.size} min={3} max={25} step={1} onChange={v => updateCH({ size: v })} accent={accent} suffix="px" />
+                <RangeSlider label={t('settings.opacity', l)} value={xh.opacity} min={0.2} max={1} step={0.05} onChange={v => updateCH({ opacity: v })} accent={accent} />
+                <RangeSlider label={t('settings.dotSize', l)} value={xh.dotSize} min={0} max={5} step={0.5} onChange={v => updateCH({ dotSize: v })} accent={accent} suffix="px" />
+              </div>
             </div>
           </motion.div>
         </div>
       )}
     </AnimatePresence>
+  );
+}
+
+// ── Helpers ──────────────────────────────────────────
+
+const ALL_MAPS: FPS3DMap[] = ['void', 'arena', 'cyber', 'outdoor', 'neon'];
+const ALL_XHAIR_STYLES: FPS3DCrosshairStyle[] = ['cross', 'dot', 'circle', 'crossDot', 'tcross'];
+
+function RangeSlider({ label, value, min, max, step, onChange, accent, suffix }: {
+  label: string; value: number; min: number; max: number; step: number;
+  onChange: (v: number) => void; accent: string; suffix?: string;
+}) {
+  return (
+    <div className="mb-4">
+      <div className="flex justify-between text-[11px] text-zinc-400 mb-1.5">
+        <span>{label}</span>
+        <span className="font-mono">{Number.isInteger(value) ? value : value.toFixed(1)}{suffix ?? ''}</span>
+      </div>
+      <input type="range" min={min} max={max} step={step} value={value}
+        onChange={e => onChange(Number(e.target.value))}
+        className="w-full h-1.5 bg-zinc-700 rounded-full appearance-none cursor-pointer
+          [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3.5
+          [&::-webkit-slider-thumb]:h-3.5 [&::-webkit-slider-thumb]:rounded-full"
+        style={{ accentColor: accent }}
+      />
+    </div>
+  );
+}
+
+function CrosshairPreview({ style, color }: { style: FPS3DCrosshairStyle; color: string }) {
+  const s = 24, h = s / 2;
+  return (
+    <svg width={s} height={s} viewBox={`0 0 ${s} ${s}`}>
+      {(style === 'cross' || style === 'crossDot' || style === 'tcross') && <>
+        {style !== 'tcross' && <line x1={h} y1={2} x2={h} y2={h - 3} stroke={color} strokeWidth="1.5" />}
+        <line x1={h} y1={h + 3} x2={h} y2={s - 2} stroke={color} strokeWidth="1.5" />
+        <line x1={2} y1={h} x2={h - 3} y2={h} stroke={color} strokeWidth="1.5" />
+        <line x1={h + 3} y1={h} x2={s - 2} y2={h} stroke={color} strokeWidth="1.5" />
+      </>}
+      {style === 'circle' && <circle cx={h} cy={h} r={h - 3} stroke={color} strokeWidth="1.5" fill="none" />}
+      {(style === 'crossDot' || style === 'dot' || style === 'circle') && <circle cx={h} cy={h} r={2} fill={color} />}
+    </svg>
+  );
+}
+
+function CrosshairPreviewFull({ config, color }: { config: CrosshairConfig; color: string }) {
+  const { style, thickness, gapV, gapH, size, opacity, dotSize } = config;
+  const cx = 40, cy = 40;
+  const hasLines = style === 'cross' || style === 'crossDot' || style === 'tcross';
+  return (
+    <svg width="80" height="80" viewBox="0 0 80 80">
+      {hasLines && <>
+        {style !== 'tcross' && <line x1={cx} y1={cy - gapV} x2={cx} y2={Math.max(0, cy - gapV - size)} stroke={color} strokeWidth={thickness} opacity={opacity} strokeLinecap="round" />}
+        <line x1={cx} y1={cy + gapV} x2={cx} y2={Math.min(80, cy + gapV + size)} stroke={color} strokeWidth={thickness} opacity={opacity} strokeLinecap="round" />
+        <line x1={cx - gapH} y1={cy} x2={Math.max(0, cx - gapH - size)} y2={cy} stroke={color} strokeWidth={thickness} opacity={opacity} strokeLinecap="round" />
+        <line x1={cx + gapH} y1={cy} x2={Math.min(80, cx + gapH + size)} y2={cy} stroke={color} strokeWidth={thickness} opacity={opacity} strokeLinecap="round" />
+      </>}
+      {style === 'circle' && <circle cx={cx} cy={cy} r={gapH + size / 2} stroke={color} strokeWidth={thickness} fill="none" opacity={opacity} />}
+      {(style === 'crossDot' || style === 'dot' || style === 'circle') && dotSize > 0 && (
+        <circle cx={cx} cy={cy} r={dotSize} fill={color} opacity={opacity} />
+      )}
+    </svg>
   );
 }
