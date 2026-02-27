@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, ElementType } from 'react';
 import { motion } from 'motion/react';
-import { Target, Crosshair, MousePointer2, Activity, Settings } from 'lucide-react';
+import { Target, Crosshair, MousePointer2, Activity, Settings, Github } from 'lucide-react';
 import { GameMode, GameSettings, COLOR_SCHEMES, hexToRgba } from '../types';
 
 interface Props {
@@ -184,6 +184,20 @@ export default function MainMenu({ onStart, settings, onOpenSettings }: Props) {
         <span className="w-1 h-1 rounded-full bg-zinc-700" />
         <span>速度: {settings.speed === 'slow' ? '慢' : settings.speed === 'normal' ? '正常' : '快'}</span>
       </motion.div>
+
+      {/* GitHub Link */}
+      <motion.a
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.8 }}
+        href="https://github.com/DanZai233/AIMBOT"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="mt-6 flex items-center gap-2 text-zinc-600 hover:text-zinc-300 transition-colors relative z-10"
+      >
+        <Github className="w-4 h-4" />
+        <span className="text-xs">GitHub</span>
+      </motion.a>
     </div>
   );
 }

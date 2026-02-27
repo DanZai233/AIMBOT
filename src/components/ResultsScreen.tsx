@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { GameMode, GameStats, GameSettings, COLOR_SCHEMES } from '../types';
-import { RotateCcw, Home, Trophy, Target, MousePointerClick, Clock } from 'lucide-react';
+import { RotateCcw, Home, Trophy, Target, MousePointerClick, Clock, Star, Github } from 'lucide-react';
 
 interface Props {
   stats: GameStats;
@@ -195,6 +195,21 @@ export default function ResultsScreen({ stats, mode, settings, onRetry, onMenu }
             主菜单
           </button>
         </motion.div>
+
+        {/* Star on GitHub */}
+        <motion.a
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.8 }}
+          href="https://github.com/DanZai233/AIMBOT"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-6 flex items-center justify-center gap-2 text-zinc-500 hover:text-yellow-400 transition-colors group"
+        >
+          <Star className="w-4 h-4 group-hover:fill-yellow-400 transition-all" />
+          <span className="text-sm">觉得好玩？给个 Star 支持一下吧</span>
+          <Github className="w-4 h-4" />
+        </motion.a>
       </motion.div>
     </div>
   );
