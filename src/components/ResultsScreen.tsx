@@ -1,17 +1,17 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { GameMode, GameStats, GameSettings, COLOR_SCHEMES, PlayerIdentity } from '../types';
-import { RotateCcw, Home, Trophy, Target, MousePointerClick, Clock, Star, Github, Upload, BarChart3 } from 'lucide-react';
+import { RotateCcw, Home, Trophy, Target, MousePointerClick, Clock, Star, Github, Upload, BarChart3, Pencil } from 'lucide-react';
 import { t } from '../i18n';
 
 interface Props {
   stats: GameStats;
   mode: GameMode;
   settings: GameSettings;
-  player: PlayerIdentity | null;
+  player: PlayerIdentity;
   onRetry: () => void;
   onMenu: () => void;
-  onSubmitScore: () => void;
+  onEditName: () => void;
   onViewLeaderboard: () => void;
 }
 
@@ -48,7 +48,7 @@ const MODE_LABELS: Record<GameMode, string> = {
   FPS3D: 'FPS 3D',
 };
 
-export default function ResultsScreen({ stats, mode, settings, player, onRetry, onMenu, onSubmitScore, onViewLeaderboard }: Props) {
+export default function ResultsScreen({ stats, mode, settings, player, onRetry, onMenu, onEditName, onViewLeaderboard }: Props) {
   const [submitState, setSubmitState] = useState<'idle' | 'loading' | 'done'>('idle');
   const colors = COLOR_SCHEMES[settings.colorScheme];
   const grade = getGrade(stats.accuracy);
@@ -67,14 +67,24 @@ export default function ResultsScreen({ stats, mode, settings, player, onRetry, 
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen p-6 bg-zinc-950">
+    <div className="flex flex-col items-center justify-center min-h-screen p-4 md:p-6 bg-zinc-950 overflow-y-auto">
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.4 }}
         className="w-full max-w-2xl bg-zinc-900/80 border border-zinc-800 rounded-3xl p-8 md:p-12 shadow-2xl backdrop-blur-xl"
       >
-        <div className="text-center mb-8">
+        {/* Player tag */}
+        <div className="flex justify-center mb-4">
+          <button onClick={onEditName}
+            className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-300 transition-colors">
+            <span className="font-medium">{player.name}</span>
+            <span className="font-mono text-zinc-600">#{player.tag.split('#')[1]}</span>
+            <Pencil className="w-3 h-3" />
+          </button>
+        </div>
+
+        <div className="text-center mb-6 md:mb-8">
           <motion.h1
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -166,7 +176,6 @@ export default function ResultsScreen({ stats, mode, settings, player, onRetry, 
           <button
             onClick={async () => {
               if (submitState !== 'idle') return;
-              if (!player) { onSubmitScore(); return; }
               setSubmitState('loading');
               try {
                 const res = await fetch('/api/leaderboard', {
