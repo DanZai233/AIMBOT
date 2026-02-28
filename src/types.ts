@@ -12,6 +12,7 @@ export type SpeedPreset = 'slow' | 'normal' | 'fast';
 
 export type FPS3DMap = 'void' | 'arena' | 'cyber' | 'outdoor' | 'neon';
 export type FPS3DCrosshairStyle = 'cross' | 'dot' | 'circle' | 'crossDot' | 'tcross';
+export type FPS3DSubMode = 'GRIDSHOT' | 'SPIDERSHOT' | 'MICROFLICK' | 'TRACKING';
 
 export interface CrosshairConfig {
   style: FPS3DCrosshairStyle;

@@ -4,9 +4,13 @@ const translations: Record<Locale, Record<string, string>> = {
   zh: {
     // Main Menu
     'app.subtitle': '提升你的鼠标控制、甩枪速度和追踪精度。',
+    'mode.gridshot': '网格甩枪',
     'mode.gridshot.desc': '命中网格上出现的3个目标，经典甩枪训练。',
+    'mode.spidershot': '蜘蛛甩枪',
     'mode.spidershot.desc': '从中心目标甩向随机外围目标再返回。',
+    'mode.microflick': '精准甩枪',
     'mode.microflick.desc': '小目标出现在屏幕中心附近，训练精准度。',
+    'mode.tracking': '追踪',
     'mode.tracking.desc': '追踪移动目标，按住鼠标左键得分。',
     'summary.size': '大小',
     'summary.speed': '速度',
@@ -72,6 +76,10 @@ const translations: Record<Locale, Record<string, string>> = {
     'mode.fps3d.desc': '真实 FPS 视角，准星固定，移动视角瞄准 3D 空间中的目标。',
     'fps.clickToLock': '点击锁定鼠标开始瞄准',
     'fps.toUnlock': '解锁鼠标',
+    'fps.menu': '菜单',
+    'fps.modeSelect': '选择模式',
+    'fps.restart': '重新开始',
+    'fps.quit': '退出到主菜单',
 
     'settings.section.fps3d': 'FPS 3D',
     'settings.sensitivity': '灵敏度',
@@ -122,9 +130,13 @@ const translations: Record<Locale, Record<string, string>> = {
 
   en: {
     'app.subtitle': 'Improve your mouse control, flick speed, and tracking precision.',
+    'mode.gridshot': 'Gridshot',
     'mode.gridshot.desc': 'Hit 3 targets on a grid. Classic flick training.',
+    'mode.spidershot': 'Spidershot',
     'mode.spidershot.desc': 'Flick from center target to a random outer target and back.',
+    'mode.microflick': 'Microflick',
     'mode.microflick.desc': 'Small targets appear near the center. Train your precision.',
+    'mode.tracking': 'Tracking',
     'mode.tracking.desc': 'Track a moving target. Hold click to score.',
     'summary.size': 'Size',
     'summary.speed': 'Speed',
@@ -188,6 +200,10 @@ const translations: Record<Locale, Record<string, string>> = {
     'mode.fps3d.desc': 'True FPS perspective. Fixed crosshair, move your view to aim at 3D targets.',
     'fps.clickToLock': 'Click to lock mouse and start aiming',
     'fps.toUnlock': 'to unlock',
+    'fps.menu': 'Menu',
+    'fps.modeSelect': 'Select Mode',
+    'fps.restart': 'Restart',
+    'fps.quit': 'Quit to Menu',
 
     'settings.section.fps3d': 'FPS 3D',
     'settings.sensitivity': 'Sensitivity',

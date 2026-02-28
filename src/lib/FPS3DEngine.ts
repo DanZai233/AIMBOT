@@ -1,7 +1,7 @@
 import * as THREE from 'three';
-import { GameSettings, GameStats, COLOR_SCHEMES, TARGET_SIZE_MULTIPLIERS, FPS3DMap } from '../types';
+import { GameSettings, GameStats, COLOR_SCHEMES, TARGET_SIZE_MULTIPLIERS, SPEED_MULTIPLIERS, FPS3DMap, FPS3DSubMode } from '../types';
 
-interface TargetEntry { group: THREE.Group; createdAt: number }
+interface TargetEntry { group: THREE.Group; createdAt: number; velocity?: THREE.Vector3 }
 interface ParticleEntry { mesh: THREE.Mesh; velocity: THREE.Vector3; life: number }
 
 export class FPS3DEngine {
@@ -16,6 +16,11 @@ export class FPS3DEngine {
 
   private yaw = 0;
   private pitch = 0;
+
+  private subMode: FPS3DSubMode = 'GRIDSHOT';
+  private spidershotAtCenter = true;
+  private isTracking = false;
+  private trackAccumulator = 0;
 
   private score = 0;
   private hits = 0;
@@ -54,6 +59,7 @@ export class FPS3DEngine {
     this.buildMap(settings.fps3d.map);
 
     canvas.addEventListener('mousedown', this.handleMouseDown);
+    canvas.addEventListener('mouseup', this.handleMouseUp);
     window.addEventListener('resize', this.handleResize);
     document.addEventListener('pointerlockchange', this.handlePointerLock);
   }
@@ -235,20 +241,39 @@ export class FPS3DEngine {
 
   // ═══════════════════════ LIFECYCLE ═══════════════════════
 
-  public start() {
+  public start(mode: FPS3DSubMode = 'GRIDSHOT') {
+    this.subMode = mode;
     this.score = 0; this.hits = 0; this.misses = 0;
+    this.spidershotAtCenter = true;
+    this.isTracking = false;
+    this.trackAccumulator = 0;
     this.targets.forEach(t => this.scene.remove(t.group)); this.targets = [];
     this.particles.forEach(p => this.scene.remove(p.mesh)); this.particles = [];
     this.startTime = performance.now();
     this.isRunning = true;
     this.clock.start();
-    for (let i = 0; i < 3; i++) this.spawnTarget();
+    this.initTargets();
     this.loop();
   }
 
-  public stop() {
-    this.isRunning = false; cancelAnimationFrame(this.animId); this.clock.stop();
+  public stopGame() {
+    this.isRunning = false;
+    cancelAnimationFrame(this.animId);
+    this.clock.stop();
     if (document.pointerLockElement === this.canvas) document.exitPointerLock();
+    this.targets.forEach(t => {
+      this.scene.remove(t.group);
+      t.group.traverse(c => {
+        if (c instanceof THREE.Mesh) { c.geometry.dispose(); if (Array.isArray(c.material)) c.material.forEach(m => m.dispose()); else c.material.dispose(); }
+      });
+    });
+    this.targets = [];
+    this.particles.forEach(p => { this.scene.remove(p.mesh); p.mesh.geometry.dispose(); (p.mesh.material as THREE.Material).dispose(); });
+    this.particles = [];
+  }
+
+  public stop() {
+    this.stopGame();
     this.cleanup();
   }
 
@@ -256,6 +281,7 @@ export class FPS3DEngine {
 
   private cleanup() {
     this.canvas.removeEventListener('mousedown', this.handleMouseDown);
+    this.canvas.removeEventListener('mouseup', this.handleMouseUp);
     window.removeEventListener('resize', this.handleResize);
     document.removeEventListener('pointerlockchange', this.handlePointerLock);
     document.removeEventListener('mousemove', this.handleMouseMove);
@@ -272,6 +298,22 @@ export class FPS3DEngine {
 
   private getRadius() { return 0.7 * TARGET_SIZE_MULTIPLIERS[this.settings.targetSize]; }
 
+  private initTargets() {
+    if (this.subMode === 'GRIDSHOT') {
+      for (let i = 0; i < 3; i++) this.spawnTarget();
+    } else if (this.subMode === 'SPIDERSHOT') {
+      this.spawnCenterTarget();
+    } else if (this.subMode === 'MICROFLICK' || this.subMode === 'TRACKING') {
+      this.spawnTarget();
+    }
+  }
+
+  private centerPosition(): THREE.Vector3 {
+    const dir = new THREE.Vector3(0, 0, -1).applyQuaternion(this.camera.quaternion);
+    const dist = 18;
+    return this.camera.position.clone().add(dir.multiplyScalar(dist));
+  }
+
   private randomPosition(): THREE.Vector3 {
     const dist = 16 + Math.random() * 14;
     const theta = (Math.random() - 0.5) * Math.PI * 1.6;
@@ -280,8 +322,47 @@ export class FPS3DEngine {
     return new THREE.Vector3(Math.sin(theta) * dist, Math.sin(phi) * dist + baseY, -Math.cos(theta) * dist);
   }
 
+  private microPosition(): THREE.Vector3 {
+    const dist = 8 + Math.random() * 6;
+    const theta = (Math.random() - 0.5) * Math.PI * 1.2;
+    const phi = (Math.random() - 0.2) * 0.4;
+    const baseY = this.settings.fps3d.map === 'outdoor' ? 6 : 5;
+    return new THREE.Vector3(Math.sin(theta) * dist, Math.sin(phi) * dist + baseY, -Math.cos(theta) * dist);
+  }
+
+  private spawnCenterTarget() {
+    const pos = this.centerPosition();
+    this.spawnTargetAt(pos);
+  }
+
   private spawnTarget() {
-    const r = this.getRadius();
+    let pos: THREE.Vector3;
+    let radiusMul = 1;
+    let velocity: THREE.Vector3 | undefined;
+
+    if (this.subMode === 'GRIDSHOT') {
+      pos = this.randomPosition();
+    } else if (this.subMode === 'SPIDERSHOT') {
+      pos = this.spidershotAtCenter ? this.centerPosition() : this.randomPosition();
+    } else if (this.subMode === 'MICROFLICK') {
+      pos = this.microPosition();
+      radiusMul = 0.5;
+    } else if (this.subMode === 'TRACKING') {
+      pos = this.randomPosition();
+      const sm = SPEED_MULTIPLIERS[this.settings.speed];
+      velocity = new THREE.Vector3(
+        (Math.random() > 0.5 ? 1 : -1) * (2 + Math.random() * 3) * sm,
+        (Math.random() > 0.5 ? 1 : -1) * (1 + Math.random() * 2) * sm,
+        (Math.random() > 0.5 ? 1 : -1) * (1 + Math.random() * 2) * sm,
+      );
+    } else {
+      pos = this.randomPosition();
+    }
+    this.spawnTargetAt(pos, radiusMul, velocity);
+  }
+
+  private spawnTargetAt(pos: THREE.Vector3, radiusMul = 1, velocity?: THREE.Vector3) {
+    const r = this.getRadius() * radiusMul;
     const group = new THREE.Group();
     group.add(new THREE.Mesh(
       new THREE.SphereGeometry(r * 1.4, 16, 16),
@@ -296,10 +377,10 @@ export class FPS3DEngine {
       new THREE.MeshStandardMaterial({ color: this.secondaryColor, emissive: this.secondaryColor, emissiveIntensity: 0.5, metalness: 0.1, roughness: 0.3 }),
     ));
     group.add(new THREE.Mesh(new THREE.SphereGeometry(r * 0.15, 8, 8), new THREE.MeshBasicMaterial({ color: 0xffffff })));
-    group.position.copy(this.randomPosition());
+    group.position.copy(pos);
     group.scale.setScalar(0.01);
     this.scene.add(group);
-    this.targets.push({ group, createdAt: performance.now() });
+    this.targets.push({ group, createdAt: performance.now(), velocity });
   }
 
   private removeTarget(entry: TargetEntry) {
@@ -333,6 +414,8 @@ export class FPS3DEngine {
     if (document.pointerLockElement !== this.canvas) { this.requestLock(); return; }
     if (!this.isRunning) return;
 
+    if (this.subMode === 'TRACKING') { this.isTracking = true; return; }
+
     this.raycaster.setFromCamera(new THREE.Vector2(0, 0), this.camera);
     const meshes: THREE.Mesh[] = [];
     this.targets.forEach(t => t.group.traverse(c => { if (c instanceof THREE.Mesh) meshes.push(c); }));
@@ -341,9 +424,20 @@ export class FPS3DEngine {
     if (hits.length > 0) {
       const hitObj = hits[0].object;
       const entry = this.targets.find(t => { let f = false; t.group.traverse(c => { if (c === hitObj) f = true; }); return f; });
-      if (entry) { this.spawnHitParticles(entry.group.position.clone()); this.removeTarget(entry); this.hits++; this.score += 100; this.spawnTarget(); }
+      if (entry) {
+        this.spawnHitParticles(entry.group.position.clone());
+        this.removeTarget(entry);
+        this.hits++;
+        this.score += 100;
+        if (this.subMode === 'SPIDERSHOT') this.spidershotAtCenter = !this.spidershotAtCenter;
+        this.spawnTarget();
+      }
     } else { this.misses++; this.score = Math.max(0, this.score - 20); this.missFlash = performance.now(); }
     this.notifyStats();
+  };
+
+  private handleMouseUp = () => {
+    if (this.subMode === 'TRACKING') this.isTracking = false;
   };
 
   private handleMouseMove = (e: MouseEvent) => {
@@ -384,6 +478,20 @@ export class FPS3DEngine {
 
   // ═══════════════════════ RENDER LOOP ═══════════════════════
 
+  private updateTrackingTarget(dt: number) {
+    const t = this.targets[0];
+    if (!t || !t.velocity) return;
+    t.group.position.addScaledVector(t.velocity, dt);
+    const p = t.group.position;
+    const lo = 8, hi = 35, yLo = 3, yHi = 12;
+    if (p.x < -hi) { p.x = -hi; t.velocity!.x = Math.abs(t.velocity!.x); }
+    if (p.x > hi) { p.x = hi; t.velocity!.x = -Math.abs(t.velocity!.x); }
+    if (p.z < -hi) { p.z = -hi; t.velocity!.z = Math.abs(t.velocity!.z); }
+    if (p.z > hi) { p.z = hi; t.velocity!.z = -Math.abs(t.velocity!.z); }
+    if (p.y < yLo) { p.y = yLo; t.velocity!.y = Math.abs(t.velocity!.y); }
+    if (p.y > yHi) { p.y = yHi; t.velocity!.y = -Math.abs(t.velocity!.y); }
+  }
+
   private loop = () => {
     if (!this.isRunning) return;
     const dt = Math.min(this.clock.getDelta(), 0.05);
@@ -392,11 +500,32 @@ export class FPS3DEngine {
     if (Math.floor(elapsed / 1000) > Math.floor((elapsed - dt * 1000) / 1000)) this.notifyStats();
     const now = performance.now();
 
+    if (this.subMode === 'TRACKING') {
+      this.updateTrackingTarget(dt);
+      if (this.isTracking && this.targets.length > 0) {
+        this.trackAccumulator += dt;
+        if (this.trackAccumulator >= 0.1) {
+          this.trackAccumulator = 0;
+          this.raycaster.setFromCamera(new THREE.Vector2(0, 0), this.camera);
+          const meshes: THREE.Mesh[] = [];
+          this.targets.forEach(t => t.group.traverse(c => { if (c instanceof THREE.Mesh) meshes.push(c); }));
+          const hits = this.raycaster.intersectObjects(meshes);
+          if (hits.length > 0) { this.hits++; this.score += 10; }
+          else { this.misses++; }
+          this.notifyStats();
+        }
+      }
+    }
+
     for (const t of this.targets) {
       const age = now - t.createdAt;
       t.group.scale.setScalar(age < 250 ? this.easeOutBack(Math.min(1, age / 250)) : 1);
-      t.group.rotation.y += dt * 0.3;
-      t.group.position.y += Math.sin(now * 0.0015 + t.createdAt) * 0.002;
+      if (this.subMode !== 'TRACKING') {
+        t.group.rotation.y += dt * 0.3;
+        t.group.position.y += Math.sin(now * 0.0015 + t.createdAt) * 0.002;
+      } else {
+        t.group.rotation.y += dt * 0.5;
+      }
     }
 
     for (let i = this.particles.length - 1; i >= 0; i--) {

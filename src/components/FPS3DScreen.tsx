@@ -1,8 +1,11 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { GameStats, GameSettings, COLOR_SCHEMES, CrosshairConfig, FPS3DCrosshairStyle } from '../types';
+import { GameStats, GameSettings, COLOR_SCHEMES, CrosshairConfig, FPS3DCrosshairStyle, FPS3DSubMode } from '../types';
 import { FPS3DEngine } from '../lib/FPS3DEngine';
-import { ArrowLeft, MousePointer } from 'lucide-react';
+import { ArrowLeft, MousePointer, Menu } from 'lucide-react';
 import { t } from '../i18n';
+import { motion, AnimatePresence } from 'motion/react';
+
+const FPS3D_SUBMODES: FPS3DSubMode[] = ['GRIDSHOT', 'SPIDERSHOT', 'MICROFLICK', 'TRACKING'];
 
 interface Props {
   settings: GameSettings;
@@ -33,6 +36,7 @@ function Crosshair3D({ config, color }: { config: CrosshairConfig; color: string
 export default function FPS3DScreen({ settings, onGameOver, onQuit }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const engineRef = useRef<FPS3DEngine | null>(null);
+  const hasStartedRef = useRef(false);
   const colors = COLOR_SCHEMES[settings.colorScheme];
   const l = settings.locale;
 
@@ -40,8 +44,28 @@ export default function FPS3DScreen({ settings, onGameOver, onQuit }: Props) {
   const [hasStarted, setHasStarted] = useState(false);
   const [countdown, setCountdown] = useState(3);
   const [locked, setLocked] = useState(false);
+  const [subMode, setSubMode] = useState<FPS3DSubMode>('GRIDSHOT');
+  const [menuOpen, setMenuOpen] = useState(false);
 
+  hasStartedRef.current = hasStarted;
   const stableGameOver = useCallback((s: GameStats) => onGameOver(s), [onGameOver]);
+
+  const doRestart = useCallback((mode: FPS3DSubMode) => {
+    setMenuOpen(false);
+    setSubMode(mode);
+    setHasStarted(false);
+    setCountdown(3);
+    setStats({ score: 0, hits: 0, misses: 0, timeLeft: settings.duration * 1000 });
+    engineRef.current?.stopGame();
+  }, [settings.duration]);
+
+  useEffect(() => {
+    if (countdown > 0) return;
+    if (countdown === 0 && !hasStarted) {
+      setHasStarted(true);
+      engineRef.current?.start(subMode);
+    }
+  }, [countdown, hasStarted, subMode]);
 
   useEffect(() => {
     if (!canvasRef.current) return;
@@ -49,7 +73,10 @@ export default function FPS3DScreen({ settings, onGameOver, onQuit }: Props) {
     engineRef.current = engine;
     engine.onUpdateStats = s => setStats(prev => ({ ...prev, ...s }));
     engine.onGameOver = s => stableGameOver(s);
-    engine.onPointerLockChange = lk => setLocked(lk);
+    engine.onPointerLockChange = lk => {
+      setLocked(lk);
+      if (!lk && hasStartedRef.current) setMenuOpen(true);
+    };
     return () => { engine.stop(); };
   }, [settings, stableGameOver]);
 
@@ -57,11 +84,8 @@ export default function FPS3DScreen({ settings, onGameOver, onQuit }: Props) {
     if (countdown > 0) {
       const timer = setTimeout(() => setCountdown(c => c - 1), 1000);
       return () => clearTimeout(timer);
-    } else if (countdown === 0 && !hasStarted) {
-      setHasStarted(true);
-      engineRef.current?.start();
     }
-  }, [countdown, hasStarted]);
+  }, [countdown]);
 
   const formatTime = (ms: number) => {
     const s = Math.ceil(ms / 1000);
@@ -93,7 +117,7 @@ export default function FPS3DScreen({ settings, onGameOver, onQuit }: Props) {
           </div>
         </div>
         <div className="flex items-start gap-6">
-          <div className="text-sm font-mono font-medium text-zinc-400 uppercase tracking-widest">FPS 3D</div>
+          <div className="text-sm font-mono font-medium text-zinc-400 uppercase tracking-widest">FPS 3D · {t(`mode.${subMode.toLowerCase()}`, l)}</div>
           <div className="text-right">
             <div className="text-4xl font-mono font-bold text-white drop-shadow-lg">{formatTime(stats.timeLeft)}</div>
             <div className="text-zinc-500 font-mono text-xs uppercase tracking-widest mt-1">Time</div>
@@ -106,10 +130,88 @@ export default function FPS3DScreen({ settings, onGameOver, onQuit }: Props) {
       </button>
 
       {hasStarted && !locked && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 z-20 cursor-pointer" onClick={() => engineRef.current?.requestLock()}>
-          <MousePointer className="w-10 h-10 mb-4" style={{ color: colors.primary }} />
-          <p className="text-zinc-300 text-lg font-medium">{t('fps.clickToLock', l)}</p>
-          <p className="text-zinc-500 text-sm mt-2">ESC {t('fps.toUnlock', l)}</p>
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 z-20">
+          <AnimatePresence mode="wait">
+            {menuOpen ? (
+              <motion.div
+                key="menu"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="w-full max-w-md mx-4 p-6 rounded-2xl bg-zinc-900/95 border border-zinc-700/80 backdrop-blur-xl shadow-2xl pointer-events-auto"
+                onClick={e => e.stopPropagation()}
+              >
+                <h3 className="text-lg font-semibold text-zinc-200 mb-4 flex items-center gap-2">
+                  <Menu className="w-5 h-5" style={{ color: colors.primary }} />
+                  {t('fps.menu', l)}
+                </h3>
+                <p className="text-zinc-400 text-sm mb-4">{t('fps.modeSelect', l)}</p>
+                <div className="grid grid-cols-2 gap-2 mb-6">
+                  {FPS3D_SUBMODES.map(m => (
+                    <button
+                      key={m}
+                      onClick={() => doRestart(m)}
+                      className={`py-3 px-4 rounded-xl text-sm font-medium transition-all ${
+                        subMode === m
+                          ? 'text-white'
+                          : 'bg-zinc-800/80 text-zinc-300 hover:bg-zinc-700/80'
+                      }`}
+                      style={subMode === m ? { background: colors.bg, borderWidth: 2, borderColor: colors.primary } : {}}
+                    >
+                      {t(`mode.${m.toLowerCase()}`, l)}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => { setMenuOpen(false); engineRef.current?.requestLock(); }}
+                    className="flex-1 py-3 rounded-xl bg-zinc-700 hover:bg-zinc-600 text-zinc-200 font-medium transition-colors"
+                  >
+                    {t('fps.clickToLock', l)}
+                  </button>
+                  <button
+                    onClick={() => doRestart(subMode)}
+                    className="flex-1 py-3 rounded-xl font-medium transition-colors"
+                    style={{ background: colors.bg, color: colors.primary }}
+                  >
+                    {t('fps.restart', l)}
+                  </button>
+                </div>
+                <button
+                  onClick={onQuit}
+                  className="w-full mt-3 py-2.5 rounded-xl text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors text-sm"
+                >
+                  {t('fps.quit', l)}
+                </button>
+              </motion.div>
+            ) : (
+              <motion.div
+                key="resume"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="flex flex-col items-center pointer-events-none"
+              >
+                <div className="flex gap-4 mb-6 pointer-events-auto">
+                  <button
+                    onClick={() => setMenuOpen(true)}
+                    className="p-3 rounded-xl bg-zinc-800/80 hover:bg-zinc-700/80 text-zinc-300 transition-colors"
+                  >
+                    <Menu className="w-6 h-6" />
+                  </button>
+                  <button
+                    onClick={() => engineRef.current?.requestLock()}
+                    className="p-3 rounded-xl flex items-center gap-2"
+                    style={{ background: colors.bg, color: colors.primary }}
+                  >
+                    <MousePointer className="w-5 h-5" />
+                    <span>{t('fps.clickToLock', l)}</span>
+                  </button>
+                </div>
+                <p className="text-zinc-500 text-sm">ESC {t('fps.toUnlock', l)}</p>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       )}
 
