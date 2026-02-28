@@ -1,7 +1,10 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { Redis } from '@upstash/redis';
 
-const VALID_MODES = ['GRIDSHOT', 'SPIDERSHOT', 'MICROFLICK', 'TRACKING', 'FPS3D'];
+const VALID_MODES = [
+  'GRIDSHOT', 'SPIDERSHOT', 'MICROFLICK', 'TRACKING',
+  'FPS3D_GRIDSHOT', 'FPS3D_SPIDERSHOT', 'FPS3D_MICROFLICK', 'FPS3D_TRACKING',
+];
 const MAX_ENTRIES = 200;
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
