@@ -23,11 +23,17 @@ function saveSettings(s: GameSettings) {
   try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(s)); } catch { /* ignore */ }
 }
 
-function loadPlayer(): PlayerIdentity | null {
+function loadOrCreatePlayer(): PlayerIdentity {
   try {
     const saved = localStorage.getItem(PLAYER_KEY);
-    return saved ? JSON.parse(saved) : null;
-  } catch { return null; }
+    if (saved) return JSON.parse(saved);
+  } catch { /* ignore */ }
+  const identity: PlayerIdentity = {
+    name: 'Player',
+    tag: `Player#${Math.floor(1000 + Math.random() * 9000)}`,
+  };
+  try { localStorage.setItem(PLAYER_KEY, JSON.stringify(identity)); } catch { /* ignore */ }
+  return identity;
 }
 
 function savePlayer(p: PlayerIdentity) {
@@ -40,10 +46,9 @@ export default function App() {
   const [lastStats, setLastStats] = useState<GameStats | null>(null);
   const [settings, setSettings] = useState<GameSettings>(loadSettings);
   const [showSettings, setShowSettings] = useState(false);
-  const [player, setPlayer] = useState<PlayerIdentity | null>(loadPlayer);
+  const [player, setPlayer] = useState<PlayerIdentity>(loadOrCreatePlayer);
   const [showNameInput, setShowNameInput] = useState(false);
   const [showLeaderboard, setShowLeaderboard] = useState(false);
-  const [pendingSubmit, setPendingSubmit] = useState(false);
 
   const handleSettingsChange = (s: GameSettings) => { setSettings(s); saveSettings(s); };
   const startGame = (m: GameMode) => { setMode(m); setGameState('PLAYING'); };
@@ -54,16 +59,6 @@ export default function App() {
     setPlayer(identity);
     savePlayer(identity);
     setShowNameInput(false);
-    if (pendingSubmit) {
-      setPendingSubmit(false);
-    }
-  };
-
-  const handleSubmitScore = () => {
-    if (!player) {
-      setPendingSubmit(true);
-      setShowNameInput(true);
-    }
   };
 
   const accent = COLOR_SCHEMES[settings.colorScheme].primary;
@@ -71,9 +66,10 @@ export default function App() {
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 font-sans selection:bg-cyan-500/30">
       {gameState === 'MENU' && (
-        <MainMenu onStart={startGame} settings={settings}
+        <MainMenu onStart={startGame} settings={settings} player={player}
           onOpenSettings={() => setShowSettings(true)}
-          onOpenLeaderboard={() => setShowLeaderboard(true)} />
+          onOpenLeaderboard={() => setShowLeaderboard(true)}
+          onEditName={() => setShowNameInput(true)} />
       )}
       {gameState === 'PLAYING' && mode !== 'FPS3D' && (
         <GameScreen mode={mode} settings={settings} onGameOver={handleGameOver} onQuit={returnToMenu} />
@@ -84,17 +80,17 @@ export default function App() {
       {gameState === 'RESULTS' && lastStats && (
         <ResultsScreen stats={lastStats} mode={mode} settings={settings} player={player}
           onRetry={() => startGame(mode)} onMenu={returnToMenu}
-          onSubmitScore={handleSubmitScore}
+          onEditName={() => setShowNameInput(true)}
           onViewLeaderboard={() => setShowLeaderboard(true)} />
       )}
 
       <SettingsPanel settings={settings} onChange={handleSettingsChange}
         onClose={() => setShowSettings(false)} isOpen={showSettings} />
       <LeaderboardPanel isOpen={showLeaderboard} settings={settings}
-        initialMode={mode} playerTag={player?.tag}
+        initialMode={mode} playerTag={player.tag}
         onClose={() => setShowLeaderboard(false)} />
       <NameInputModal isOpen={showNameInput} locale={settings.locale} accent={accent}
-        onSave={handleNameSave} onClose={() => { setShowNameInput(false); setPendingSubmit(false); }} />
+        onSave={handleNameSave} onClose={() => setShowNameInput(false)} />
     </div>
   );
 }
