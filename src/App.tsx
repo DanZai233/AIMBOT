@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { GameMode, GameState, GameStats, GameSettings, DEFAULT_SETTINGS, PlayerIdentity, COLOR_SCHEMES } from './types';
+import { GameMode, GameState, GameStats, GameSettings, DEFAULT_SETTINGS, PlayerIdentity, COLOR_SCHEMES, FPS3DSubMode, LeaderboardMode } from './types';
 import MainMenu from './components/MainMenu';
 import GameScreen from './components/GameScreen';
 import FPS3DScreen from './components/FPS3DScreen';
@@ -43,6 +43,7 @@ function savePlayer(p: PlayerIdentity) {
 export default function App() {
   const [gameState, setGameState] = useState<GameState>('MENU');
   const [mode, setMode] = useState<GameMode>('GRIDSHOT');
+  const [lastFps3dSubMode, setLastFps3dSubMode] = useState<FPS3DSubMode | null>(null);
   const [lastStats, setLastStats] = useState<GameStats | null>(null);
   const [settings, setSettings] = useState<GameSettings>(loadSettings);
   const [showSettings, setShowSettings] = useState(false);
@@ -51,9 +52,17 @@ export default function App() {
   const [showLeaderboard, setShowLeaderboard] = useState(false);
 
   const handleSettingsChange = (s: GameSettings) => { setSettings(s); saveSettings(s); };
-  const startGame = (m: GameMode) => { setMode(m); setGameState('PLAYING'); };
-  const handleGameOver = (stats: GameStats) => { setLastStats(stats); setGameState('RESULTS'); };
-  const returnToMenu = () => { setGameState('MENU'); setLastStats(null); };
+  const startGame = (m: GameMode) => { setMode(m); setLastFps3dSubMode(null); setGameState('PLAYING'); };
+  const handleGameOver = (stats: GameStats, fps3dSubMode?: FPS3DSubMode) => {
+    setLastStats(stats);
+    setLastFps3dSubMode(mode === 'FPS3D' ? (fps3dSubMode ?? 'GRIDSHOT') : null);
+    setGameState('RESULTS');
+  };
+  const returnToMenu = () => { setGameState('MENU'); setLastStats(null); setLastFps3dSubMode(null); };
+
+  const leaderboardInitialMode: LeaderboardMode = mode === 'FPS3D'
+    ? (`FPS3D_${lastFps3dSubMode ?? 'GRIDSHOT'}` as LeaderboardMode)
+    : mode;
 
   const handleNameSave = (identity: PlayerIdentity) => {
     setPlayer(identity);
@@ -78,7 +87,7 @@ export default function App() {
         <FPS3DScreen settings={settings} onGameOver={handleGameOver} onQuit={returnToMenu} />
       )}
       {gameState === 'RESULTS' && lastStats && (
-        <ResultsScreen stats={lastStats} mode={mode} settings={settings} player={player}
+        <ResultsScreen stats={lastStats} mode={mode} fps3dSubMode={lastFps3dSubMode ?? undefined} settings={settings} player={player}
           onRetry={() => startGame(mode)} onMenu={returnToMenu}
           onEditName={() => setShowNameInput(true)}
           onViewLeaderboard={() => setShowLeaderboard(true)} />
@@ -87,7 +96,7 @@ export default function App() {
       <SettingsPanel settings={settings} onChange={handleSettingsChange}
         onClose={() => setShowSettings(false)} isOpen={showSettings} />
       <LeaderboardPanel isOpen={showLeaderboard} settings={settings}
-        initialMode={mode} playerTag={player.tag}
+        initialMode={leaderboardInitialMode} playerTag={player.tag}
         onClose={() => setShowLeaderboard(false)} />
       <NameInputModal isOpen={showNameInput} locale={settings.locale} accent={accent}
         onSave={handleNameSave} onClose={() => setShowNameInput(false)} />

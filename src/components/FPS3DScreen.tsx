@@ -9,7 +9,7 @@ const FPS3D_SUBMODES: FPS3DSubMode[] = ['GRIDSHOT', 'SPIDERSHOT', 'MICROFLICK', 
 
 interface Props {
   settings: GameSettings;
-  onGameOver: (stats: GameStats) => void;
+  onGameOver: (stats: GameStats, fps3dSubMode?: FPS3DSubMode) => void;
   onQuit: () => void;
 }
 
@@ -37,6 +37,7 @@ export default function FPS3DScreen({ settings, onGameOver, onQuit }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const engineRef = useRef<FPS3DEngine | null>(null);
   const hasStartedRef = useRef(false);
+  const subModeRef = useRef<FPS3DSubMode>('GRIDSHOT');
   const colors = COLOR_SCHEMES[settings.colorScheme];
   const l = settings.locale;
 
@@ -48,7 +49,8 @@ export default function FPS3DScreen({ settings, onGameOver, onQuit }: Props) {
   const [menuOpen, setMenuOpen] = useState(false);
 
   hasStartedRef.current = hasStarted;
-  const stableGameOver = useCallback((s: GameStats) => onGameOver(s), [onGameOver]);
+  subModeRef.current = subMode;
+  const stableGameOver = useCallback((s: GameStats) => onGameOver(s, subModeRef.current), [onGameOver]);
 
   const doRestart = useCallback((mode: FPS3DSubMode) => {
     setMenuOpen(false);

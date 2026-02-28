@@ -14,6 +14,9 @@ export type FPS3DMap = 'void' | 'arena' | 'cyber' | 'outdoor' | 'neon';
 export type FPS3DCrosshairStyle = 'cross' | 'dot' | 'circle' | 'crossDot' | 'tcross';
 export type FPS3DSubMode = 'GRIDSHOT' | 'SPIDERSHOT' | 'MICROFLICK' | 'TRACKING';
 
+/** API mode string for leaderboard: 2D modes or FPS3D_* sub-modes */
+export type LeaderboardMode = GameMode | `FPS3D_${FPS3DSubMode}`;
+
 export interface CrosshairConfig {
   style: FPS3DCrosshairStyle;
   thickness: number;

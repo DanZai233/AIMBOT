@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { GameMode, GameStats, GameSettings, COLOR_SCHEMES, PlayerIdentity } from '../types';
+import { GameMode, GameStats, GameSettings, COLOR_SCHEMES, PlayerIdentity, FPS3DSubMode } from '../types';
 import { RotateCcw, Home, Trophy, Target, MousePointerClick, Clock, Star, Github, Upload, BarChart3, Pencil } from 'lucide-react';
 import { t } from '../i18n';
 
 interface Props {
   stats: GameStats;
   mode: GameMode;
+  fps3dSubMode?: FPS3DSubMode;
   settings: GameSettings;
   player: PlayerIdentity;
   onRetry: () => void;
@@ -48,7 +49,7 @@ const MODE_LABELS: Record<GameMode, string> = {
   FPS3D: 'FPS 3D',
 };
 
-export default function ResultsScreen({ stats, mode, settings, player, onRetry, onMenu, onEditName, onViewLeaderboard }: Props) {
+export default function ResultsScreen({ stats, mode, fps3dSubMode, settings, player, onRetry, onMenu, onEditName, onViewLeaderboard }: Props) {
   const [submitState, setSubmitState] = useState<'idle' | 'loading' | 'done'>('idle');
   const colors = COLOR_SCHEMES[settings.colorScheme];
   const grade = getGrade(stats.accuracy);
@@ -99,7 +100,9 @@ export default function ResultsScreen({ stats, mode, settings, player, onRetry, 
             {t('results.title', l)}
           </motion.h1>
           <p className="text-zinc-400 font-medium uppercase tracking-widest text-sm">
-            {MODE_LABELS[mode]} MODE
+            {mode === 'FPS3D' && fps3dSubMode
+              ? `FPS 3D · ${MODE_LABELS[fps3dSubMode]}`  // FPS3DSubMode uses same keys as GameMode for 2D
+              : MODE_LABELS[mode]} MODE
           </p>
         </div>
 
@@ -177,11 +180,12 @@ export default function ResultsScreen({ stats, mode, settings, player, onRetry, 
             onClick={async () => {
               if (submitState !== 'idle') return;
               setSubmitState('loading');
+              const lbMode = mode === 'FPS3D' && fps3dSubMode ? `FPS3D_${fps3dSubMode}` : mode;
               try {
                 const res = await fetch('/api/leaderboard', {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ mode, name: player.name, tag: player.tag, score: stats.score, accuracy: stats.accuracy, hits: stats.hits, misses: stats.misses }),
+                  body: JSON.stringify({ mode: lbMode, name: player.name, tag: player.tag, score: stats.score, accuracy: stats.accuracy, hits: stats.hits, misses: stats.misses }),
                 });
                 setSubmitState(res.ok ? 'done' : 'idle');
               } catch { setSubmitState('idle'); }

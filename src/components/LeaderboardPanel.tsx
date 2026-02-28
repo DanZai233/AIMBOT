@@ -1,20 +1,21 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, RefreshCw, Trophy } from 'lucide-react';
-import { GameMode, LeaderboardEntry, COLOR_SCHEMES, GameSettings } from '../types';
-import { t, Locale } from '../i18n';
+import { LeaderboardMode, LeaderboardEntry, COLOR_SCHEMES, GameSettings } from '../types';
+import { t } from '../i18n';
 
 interface Props {
   isOpen: boolean;
   settings: GameSettings;
-  initialMode?: GameMode;
+  initialMode?: LeaderboardMode;
   playerTag?: string;
   onClose: () => void;
 }
 
-const MODES: GameMode[] = ['GRIDSHOT', 'SPIDERSHOT', 'MICROFLICK', 'TRACKING', 'FPS3D'];
-const MODE_LABELS: Record<GameMode, string> = {
-  GRIDSHOT: 'Gridshot', SPIDERSHOT: 'Spider', MICROFLICK: 'Micro', TRACKING: 'Track', FPS3D: '3D',
+const MODES: LeaderboardMode[] = ['GRIDSHOT', 'SPIDERSHOT', 'MICROFLICK', 'TRACKING', 'FPS3D_GRIDSHOT', 'FPS3D_SPIDERSHOT', 'FPS3D_MICROFLICK', 'FPS3D_TRACKING'];
+const MODE_LABELS: Record<LeaderboardMode, string> = {
+  GRIDSHOT: 'Gridshot', SPIDERSHOT: 'Spider', MICROFLICK: 'Micro', TRACKING: 'Track',
+  FPS3D_GRIDSHOT: '3D Grid', FPS3D_SPIDERSHOT: '3D Spider', FPS3D_MICROFLICK: '3D Micro', FPS3D_TRACKING: '3D Track',
 };
 
 async function fetchLeaderboard(mode: string): Promise<LeaderboardEntry[]> {
@@ -28,23 +29,36 @@ async function fetchLeaderboard(mode: string): Promise<LeaderboardEntry[]> {
 export default function LeaderboardPanel({ isOpen, settings, initialMode, playerTag, onClose }: Props) {
   const l = settings.locale;
   const accent = COLOR_SCHEMES[settings.colorScheme].primary;
-  const [mode, setMode] = useState<GameMode>(initialMode ?? 'GRIDSHOT');
+  const resolveInitial = (): LeaderboardMode => {
+    if (!initialMode) return 'GRIDSHOT';
+    if (MODES.includes(initialMode)) return initialMode;
+    if (initialMode === 'FPS3D') return 'FPS3D_GRIDSHOT'; // legacy fallback
+    return 'GRIDSHOT';
+  };
+  const [mode, setMode] = useState<LeaderboardMode>(resolveInitial());
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (m?: LeaderboardMode) => {
+    const target = m ?? mode;
     setLoading(true); setError(false);
-    const data = await fetchLeaderboard(mode);
+    const data = await fetchLeaderboard(target);
     if (data.length === 0 && entries.length === 0) {
-      const res = await fetch(`/api/leaderboard?mode=${mode}&limit=1`).catch(() => null);
+      const res = await fetch(`/api/leaderboard?mode=${target}&limit=1`).catch(() => null);
       if (!res || !res.ok) setError(true);
     }
     setEntries(data);
     setLoading(false);
   }, [mode]);
 
-  useEffect(() => { if (isOpen) load(); }, [isOpen, load]);
+  useEffect(() => {
+    if (isOpen) setMode(resolveInitial());
+  }, [isOpen, initialMode]);
+
+  useEffect(() => {
+    if (isOpen) load();
+  }, [isOpen, load]);
 
   return (
     <AnimatePresence>
